@@ -55,6 +55,36 @@ yunseongApps/
 └── CLAUDE.md                    # Claude Code 가이드
 ```
 
+## 앱 스크린샷
+
+### Lottomate
+
+<p align="center">
+  <img src="screenshots/lottomate/home.png" width="250" alt="홈 화면">
+  <img src="screenshots/lottomate/numbers.png" width="250" alt="번호 관리">
+  <img src="screenshots/lottomate/statistics.png" width="250" alt="통계">
+</p>
+
+> 스크린샷은 추후 업데이트 예정입니다.
+
+### Lunar Phase
+
+<p align="center">
+  <img src="screenshots/lunar/phase.png" width="250" alt="달 위상">
+  <img src="screenshots/lunar/calendar.png" width="250" alt="달력">
+</p>
+
+> 스크린샷은 추후 업데이트 예정입니다.
+
+### QR Scanner
+
+<p align="center">
+  <img src="screenshots/qrscanner/scan.png" width="250" alt="QR 스캔">
+  <img src="screenshots/qrscanner/result.png" width="250" alt="스캔 결과">
+</p>
+
+> 스크린샷은 추후 업데이트 예정입니다.
+
 ## 기술 스택
 
 ### Android
