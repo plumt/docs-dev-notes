@@ -40,6 +40,9 @@ ADMOB_BANNER_ID=ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx
 - **Statistics**: Analyze lottery number patterns and statistics
 - **Winning Checker**: Check if your numbers have won
 - **QR Scanner**: Scan lottery ticket QR codes
+- **FCM Notifications**:
+  - Winning result notifications (Saturday 20:55)
+  - Purchase reminder notifications (Saturday 18:00)
 
 ## Dependencies
 
@@ -59,7 +62,11 @@ ADMOB_BANNER_ID=ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx
 - `:feature:qr-scanner` - QR code scanning
 
 ### External Services
-- **Firebase**: Crashlytics for crash reporting
+- **Firebase**:
+  - Crashlytics for crash reporting
+  - Cloud Messaging (FCM) for push notifications
+  - Cloud Functions for scheduled notification triggers
+  - Firestore for lottery data storage
 - **AdMob**: Mobile advertising platform
 
 ## Build Configuration

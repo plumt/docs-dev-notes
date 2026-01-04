@@ -265,4 +265,3 @@ include(":feature:newfeature")
 ## 더 알아보기
 
 - [프로젝트 구조](README.md)
-- [디자인 시스템](docs/PILLYZE_DESIGN_SYSTEM.md)
