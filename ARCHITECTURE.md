@@ -7,20 +7,34 @@ yunseongApps는 Android 멀티 앱 모노레포입니다. Clean Architecture와 
 ## 모듈 계층 구조
 
 ```
-┌─────────────────────────────────────┐
-│         App Layer (app/*)           │  ← 엔트리 포인트, 네비게이션
-│  lottomate, lunar, qrscanner        │
-└────────────┬────────────────────────┘
-             │ depends on
-┌────────────▼────────────────────────┐
-│      Feature Layer (feature/*)      │  ← 비즈니스 로직 + UI
-│  lotto/*, moon/*, qr/*, lock/...    │
-└────────────┬────────────────────────┘
-             │ depends on
-┌────────────▼────────────────────────┐
-│       Core Layer (core/*)           │  ← 공통 인프라
-│  common, ui, network, database...   │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│              Apps (apps/*)                           │  ← 엔트리 포인트, 네비게이션
+│  lottomate, lunar, qrscanner, diding, moduta         │
+└────────────────────────┬─────────────────────────────┘
+                         │ depends on
+┌────────────────────────▼─────────────────────────────┐
+│         App Core/Feature (apps/*/core, apps/*/feature)│  ← 앱 전용 모듈
+└────────────────────────┬─────────────────────────────┘
+                         │ depends on
+┌────────────────────────▼─────────────────────────────┐
+│         Shared Feature (shared/feature/*)             │  ← 비즈니스 로직 + UI
+│  qr, lock, oss-licenses, app-update, chart,          │
+│  image-picker, image-saver, notification-inbox,       │
+│  notification-settings, seoul-bus, share,             │
+│  social-login, webview (16개)                        │
+└────────────────────────┬─────────────────────────────┘
+                         │ depends on
+┌────────────────────────▼─────────────────────────────┐
+│         Shared Core (shared/core/*)                   │  ← 공통 인프라
+│  common/* (network, database, ui, admob,              │
+│            designsystem, location-provider)           │
+│  firebase/* (core, crashlytics, remote-config,        │
+│              messaging, firestore, auth)              │
+│  fundamental/* (common, permission,                   │
+│                 local-notification, alarm)            │
+│  lunar/* (calculator)                                 │
+│  permissions/* (11개 런타임 권한 모듈)               │
+└──────────────────────────────────────────────────────┘
 ```
 
 ## 의존성 규칙
@@ -76,12 +90,12 @@ dependencies {
 - Repository 구현
 
 **종류**:
-- **App-specific**: 특정 앱 전용 (예: `feature/lotto/*`)
-- **Shared**: 여러 앱에서 공유 (예: `feature/qr/*`, `feature/lock`)
+- **App-specific**: 특정 앱 전용 (예: `apps/lottomate/feature/*`, `apps/diding/feature/*`)
+- **Shared**: 여러 앱에서 공유 (예: `shared/feature/qr/*`, `shared/feature/lock`)
 
 **예시**:
 ```kotlin
-// feature/lotto/winning-numbers/build.gradle.kts
+// apps/lottomate/feature/winning-numbers/build.gradle.kts
 plugins {
     id("convention.android.library")
     id("convention.android.compose")
@@ -89,9 +103,9 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:common"))
-    implementation(project(":core:ui"))
-    implementation(project(":feature:lotto:common"))
+    implementation(project(":shared:core:common:ui"))
+    implementation(project(":shared:core:fundamental:common"))
+    implementation(project(":apps:lottomate:core:common"))
 }
 ```
 
@@ -119,22 +133,13 @@ Gradle Convention Plugins로 빌드 설정을 표준화합니다.
 
 ### 사용 가능한 플러그인
 
-```kotlin
-// 앱 모듈
-id("convention.android.application")
-
-// 라이브러리 모듈
-id("convention.android.library")
-
-// Compose 사용
-id("convention.android.compose")
-
-// Hilt DI 사용
-id("convention.android.hilt")
-
-// BuildConfig 생성
-id("convention.buildconfig")
-```
+| 플러그인 | 역할 |
+|---------|------|
+| `convention.android.application` | 앱 모듈 기본 설정 (sdk 버전, proguard 등) |
+| `convention.android.library` | 라이브러리 모듈 기본 설정 |
+| `convention.android.compose` | Compose 컴파일러, BOM 설정 |
+| `convention.android.hilt` | Hilt DI 설정 |
+| `convention.buildconfig` | BuildConfig 생성 활성화 (라이브러리 모듈용) |
 
 ### 장점
 - 중복 설정 제거
@@ -148,7 +153,7 @@ id("convention.buildconfig")
 ```toml
 [versions]
 kotlin = "2.2.10"
-compose-bom = "2024.09.00"
+compose-bom = "2025.02.00"
 hilt = "2.56.2"
 
 [libraries]
@@ -246,8 +251,8 @@ include(":feature:newfeature")
 
 ### Android
 - **Language**: Kotlin 2.2.10
-- **Build**: Gradle 8.13-rc-1, AGP 9.0.0-alpha11
-- **UI**: Jetpack Compose (BOM 2024.09.00)
+- **Build**: AGP 9.0.1
+- **UI**: Jetpack Compose (BOM 2025.02.00)
 - **DI**: Hilt 2.56.2
 - **Database**: Room 2.7.0-alpha12
 - **SDK**: min 29, target 36, compile 36
@@ -258,9 +263,9 @@ include(":feature:newfeature")
 - **Framework**: Firebase Functions v2
 
 ### Frontend (Web)
-- **Framework**: React 18
-- **Language**: TypeScript
-- **Build**: Vite
+- **Framework**: React 19.2
+- **Language**: TypeScript 5.9
+- **Build**: Vite 7.2
 
 ## 더 알아보기
 

@@ -6,35 +6,60 @@ Android 멀티 앱 모노레포 프로젝트
 
 ```
 yunseongApps/
-├── app/                          # 앱 모듈
+├── apps/                         # 앱 모듈
 │   ├── lottomate/               # Lottomate Android 앱
-│   ├── lunar/                   # Lunar Android 앱
-│   └── qrscanner/               # QR Scanner Android 앱
+│   ├── lunar/                   # LunarPhase Android 앱
+│   ├── qrscanner/               # QR Scanner Android 앱
+│   ├── diding/                  # Diding Android 앱
+│   └── moduta/                  # Moduta Android 앱 (서울시 버스)
 │
-├── feature/                      # Feature 모듈
-│   ├── lotto/                   # Lottomate feature 모듈 (app-specific)
-│   │   ├── common/
-│   │   ├── database/
-│   │   ├── winning-numbers/
-│   │   ├── my-numbers/
-│   │   ├── statistics/
-│   │   └── winning-checker/
-│   ├── qr/                      # QR feature 모듈 (shared)
-│   │   ├── common/
-│   │   ├── scanner/
-│   │   └── multi-scanner/
-│   ├── lock/                    # 앱 잠금 feature (shared)
-│   └── oss-licenses/            # 오픈소스 라이선스 (shared)
-│
-├── core/                         # Core 모듈 (infrastructure)
-│   ├── common/                  # 공통 유틸리티
-│   ├── ui/                      # UI 컴포넌트
-│   ├── design-system/           # Material 3 테마
-│   ├── network/                 # 네트워크 설정
-│   ├── database/                # Room 기본 설정
-│   ├── permission/              # 권한 처리
-│   ├── firebase/                # Firebase 설정
-│   └── admob/                   # AdMob 통합
+├── shared/
+│   ├── feature/                  # Shared Feature 모듈 (16개)
+│   │   ├── qr/                  # QR feature 모듈
+│   │   │   ├── common/
+│   │   │   ├── scanner/
+│   │   │   ├── multi-scanner/
+│   │   │   └── generator/
+│   │   ├── lock/                # 앱 잠금 feature
+│   │   ├── oss-licenses/        # 오픈소스 라이선스
+│   │   ├── app-update/          # 앱 업데이트 안내
+│   │   ├── chart/               # 차트 컴포넌트
+│   │   ├── image-picker/        # 이미지 선택
+│   │   ├── image-saver/         # 이미지 저장
+│   │   ├── notification-inbox/  # 알림 수신함
+│   │   ├── notification-settings/ # 알림 설정
+│   │   ├── seoul-bus/           # 서울시 버스 실시간 정보
+│   │   ├── share/               # 공유 기능
+│   │   ├── social-login/        # 소셜 로그인
+│   │   └── webview/             # 웹뷰
+│   │
+│   └── core/                    # Shared Core 모듈 (28개, infrastructure)
+│       ├── common/              # 공통 인프라
+│       │   ├── admob/           # AdMob 통합
+│       │   ├── database/        # Room 기본 설정
+│       │   ├── designsystem/    # Material 3 테마
+│       │   ├── location-provider/ # 위치 제공자
+│       │   ├── network/         # 네트워크 설정
+│       │   └── ui/              # UI 컴포넌트
+│       ├── firebase/            # Firebase 통합
+│       │   ├── auth/
+│       │   ├── core/
+│       │   ├── crashlytics/
+│       │   ├── firestore/
+│       │   ├── messaging/
+│       │   └── remote-config/
+│       ├── fundamental/         # 기반 기능
+│       │   ├── alarm/
+│       │   ├── common/
+│       │   ├── local-notification/
+│       │   └── permission/
+│       ├── lunar/               # 달 관련 공통
+│       │   └── calculator/
+│       └── permissions/         # 런타임 권한 (11개)
+│           ├── permission-core/
+│           ├── permission-camera/
+│           ├── permission-gallery/
+│           └── ...
 │
 ├── backend/                      # 백엔드 서비스
 │   └── lottomate/
@@ -46,6 +71,13 @@ yunseongApps/
 ├── build-logic/                  # Gradle Convention Plugins
 │   └── convention/
 │
+├── clients/                      # 앱별 설정 파일 (NDK 암호화 대상)
+│   ├── lottomate/config.json
+│   ├── lunar/config.json
+│   ├── qrscanner/config.json
+│   ├── diding/config.json
+│   └── moduta/config.json
+│
 ├── .github/workflows/            # GitHub Actions
 │   ├── deploy-firebase.yml     # Firebase 배포 (수동)
 │   └── build-android.yml       # Android 빌드 (자동)
@@ -54,6 +86,16 @@ yunseongApps/
 ├── settings.gradle.kts          # Module 설정
 └── CLAUDE.md                    # Claude Code 가이드
 ```
+
+## 앱 목록
+
+| 앱 | 패키지명 | 버전 | Flavor |
+|----|---------|------|--------|
+| Lottomate | com.yunseong.lottomate | v1.0.0 | dev / prod |
+| LunarPhase | com.yun.lunarphase | v1.3.2 | - |
+| QRScanner | com.yunseong.qring | v1.0.0 | dev / prod |
+| Diding | com.yunseong.diding | v1.0.0 | - |
+| Moduta | com.yunseong.moduta | v1.0.0 | - |
 
 ## 앱 스크린샷
 
@@ -88,9 +130,14 @@ yunseongApps/
 ## 기술 스택
 
 ### Android
-- Kotlin 2.0.21
-- Jetpack Compose (Material 3)
-- minSdk: 29, targetSdk: 36
+- Kotlin 2.2.10
+- AGP 9.0.1
+- Jetpack Compose (BOM 2025.02.00, Material 3)
+- Hilt 2.56.2
+- Room 2.7.0-alpha12
+- Firebase BOM 34.0.0
+- KSP 2.3.2
+- minSdk: 29, targetSdk: 36, compileSdk: 36, Java: 17
 
 ### Backend (Firebase Functions)
 - TypeScript 5.3
@@ -101,9 +148,9 @@ yunseongApps/
 - Cloud Scheduler (매주 토요일 20:55)
 
 ### Frontend (Web)
-- React 18
+- React 19.2
 - TypeScript
-- Vite
+- Vite 7.2
 - React Router
 - Firebase Hosting
 
@@ -142,33 +189,59 @@ npm run build        # 프로덕션 빌드
 
 ### Android 개발
 ```bash
-./gradlew :app:lottomate:build
-./gradlew :app:lottomate:installDebug
+./gradlew :apps:lottomate:build
+./gradlew :apps:lottomate:installDebug
 ```
 
 ## 모노레포 아키텍처
 
 ### 모듈 계층 구조
 ```
-app → feature → core
+apps → shared/feature → shared/core
 ```
 
-- **app**: 앱 구성 및 네비게이션
-- **feature**: 비즈니스 로직 + UI (app-specific or shared)
-- **core**: 공통 인프라 (네트워크, UI, DB 등)
+- **apps**: 앱 구성 및 네비게이션
+- **shared/feature**: 비즈니스 로직 + UI (앱 전용 또는 공유)
+- **shared/core**: 공통 인프라 (네트워크, UI, DB 등)
+
+### 모듈 수
+- Shared Core: 28개
+- Shared Feature: 16개
+- App 전용: 24개
+- **합계: 68개**
 
 ### 의존성 규칙
-- ✅ `app` → `feature` + `core`
-- ✅ `feature` → `core`
-- ✅ `core` → `core` (신중하게)
-- ❌ `core` → `feature` or `app`
-- ❌ `feature` → `feature` (core 추상화 필요)
+- apps → shared/feature + shared/core
+- shared/feature → shared/core
+- shared/core → shared/core (신중하게)
+- shared/core → shared/feature (금지)
+- shared/feature → shared/feature (금지, core 추상화 필요)
 
 ### Convention Plugins
 - `convention.android.application` - 앱 기본 설정
 - `convention.android.library` - 라이브러리 기본 설정
 - `convention.android.compose` - Compose 설정
 - `convention.android.hilt` - Hilt DI 설정
+- `convention.buildconfig` - BuildConfig 설정
+
+## 보안 아키텍처
+
+API 키·URL·설정값 등을 NDK/JNI로 보호합니다.
+
+- `clients/<app>/config.json` → 빌드 타임에 Python 스크립트 실행
+- XOR 암호화된 C 코드 자동 생성 → NDK로 `.so` 바이너리 컴파일
+- 런타임에 JNI 호출로 복호화 (메모리에서만 평문 존재)
+- BuildConfig에 평문 노출 없음 / `.so` 바이너리 내 평문 없음
+- XOR 키: 필드명 SHA-256 파생 (결정론적, 증분 빌드 안정)
+
+## 환경 설정
+
+API 키와 설정값은 `clients/<앱명>/config.json`에서 관리됩니다.
+빌드 시 자동으로 NDK 바이너리로 암호화됩니다.
+
+Keystore 관련 시크릿만 `local.properties`에 등록합니다:
+- KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+- FIREBASE_SERVICE_ACCOUNT_FILE (App Distribution용)
 
 ## 배포
 
@@ -218,10 +291,6 @@ GitHub Actions → Deploy Firebase → Run workflow
 - 당첨 결과 푸시 알림
 - 당첨 번호 확인
 
-## 환경 변수
-
-현재는 환경 변수가 필요 없습니다. Firebase Admin SDK가 자동으로 인증합니다.
-
 ## 로그 확인
 
 ```bash
@@ -231,7 +300,7 @@ firebase functions:log
 ## 개발 가이드
 
 ### 새 모듈 추가
-1. 모듈 위치 결정: app/feature/core
+1. 모듈 위치 결정: apps/shared/feature/shared/core
 2. `settings.gradle.kts`에 모듈 추가
 3. `build.gradle.kts` 생성 (Convention Plugin 사용)
 4. 필요한 의존성 추가 (`libs.versions.toml` 사용)
@@ -239,7 +308,7 @@ firebase functions:log
 ### 의존성 추가
 1. `gradle/libs.versions.toml`에 버전 추가
 2. 모듈의 `build.gradle.kts`에서 `libs.*` 사용
-3. ❌ 하드코딩된 버전 금지
+3. 하드코딩된 버전 금지
 
 ### 커밋 컨벤션
 ```
@@ -256,8 +325,8 @@ feat(camera): 카메라 모듈 xxx 기능 추가
 ## 주의사항
 
 ### Android
-- minSdk: 29, targetSdk: 36, compileSdk: 36
-- Kotlin 2.0.21, AGP 9.0.0-alpha11
+- minSdk: 29, targetSdk: 36, compileSdk: 36, Java: 17
+- Kotlin 2.2.10, AGP 9.0.1
 - 모든 버전은 `libs.versions.toml`에서 관리
 
 ### Firebase
