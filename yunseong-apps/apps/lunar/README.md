@@ -45,8 +45,8 @@
 
 ### 공유 모듈
 - `:shared:core:common:app-shell` - 앱 셸(Scaffold, 바텀바, 딥링크 호스트 Activity)
-- `:shared:core:lunar:calculator` - Meeus 알고리즘 기반 달 계산 라이브러리(위상 이벤트, 월령, 블루문, 슈퍼문)
-- `:shared:core:common:admob` - 배너 광고
+- 달 계산(위상 이벤트, 월령, 블루문, 슈퍼문)은 공개 SDK [sdk-kotlin-astro](https://github.com/plumt/sdk-kotlin-astro)(`net.plumt.astro:lunar`)를 의존한다. 이 저장소의 `shared:core:lunar:calculator` 모듈은 SDK 로 이전하며 없어졌다
+- `:shared:core:common:admob` - 배너 광고(공개 SDK 로 이전 중)
 - `:shared:core:common:astro-event`, `weather-kma`, `wikipedia`, `moon-viewing`, `location-provider` - 천문현상·날씨·용어 설명·달 보기 판단·현재 위치
 - `:shared:core:firebase:messaging`, `crashlytics` - FCM 라우터, 크래시 리포터
 - `:shared:feature:app-update`, `oss-licenses`, `settings-ui`, `notification-settings`, `notification-inbox:*`

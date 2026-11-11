@@ -2,7 +2,7 @@
 
 ## 개요
 
-yunseongApps는 Android 앱 6개(Lottomate, Lunar, QRScanner, Diding, Moduta, Fxrate)를 담은 멀티 앱 모노레포입니다.
+yunseongApps는 Android 앱 7개(Lottomate, Lunar, QRScanner, Diding, Moduta, Fxrate, AirTalk)를 담은 멀티 앱 모노레포입니다.
 Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 때 기존 모듈을 조립하는 것이 기본이 되도록 설계했습니다.
 규칙은 문서에만 두지 않고 Gradle Convention Plugin의 Guard로 빌드 시점에 강제합니다.
 
@@ -11,7 +11,8 @@ Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 �
 ```
 ┌──────────────────────────────────────────────────────┐
 │              Apps (apps/*)                           │  조립 전용: Application, MainActivity,
-│  lottomate, lunar, qrscanner, diding, moduta, fxrate │  내비게이션, DI 바인딩
+│  lottomate, lunar, qrscanner, diding, moduta,        │  내비게이션, DI 바인딩
+│  fxrate, airtalk                                     │
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
@@ -19,7 +20,7 @@ Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 �
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
-│         Shared Feature (shared/feature/*)            │  여러 앱이 공유하는 기능 (30개)
+│         Shared Feature (shared/feature/*)            │  여러 앱이 공유하는 기능 (33개)
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
@@ -28,8 +29,8 @@ Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 �
 └──────────────────────────────────────────────────────┘
 ```
 
-총 135개 모듈(MODULE_INDEX 기준)입니다. Shared Core는 fundamental 5, permissions 11, common 29, firebase 6, lunar 1이고,
-Shared Feature는 30개, 앱 전용 모듈은 앱마다 5~15개입니다.
+총 168개 모듈(MODULE_INDEX 기준)입니다. Shared Core는 fundamental 5, permissions 11, common 35, firebase 10이고,
+Shared Feature는 33개, 앱 전용 모듈은 앱마다 5~17개입니다. 달 천문 계산 모듈(옛 lunar)은 공개 SDK 로 옮겨 가는 중이라 더 이상 이 저장소의 모듈이 아닙니다.
 
 shared 모듈 문서는 [shared/core](shared/core.md), [shared/feature](shared/feature.md)에 있습니다.
 
@@ -73,7 +74,7 @@ shared 모듈 문서는 [shared/core](shared/core.md), [shared/feature](shared/f
 - 화면 모듈은 `convention.feature`를 씁니다. `library + hilt + compose` 손조합은 금지입니다 (`ModuleConventionGuard`).
 - Firebase 모듈을 쓰면 `google-services` 설정이 있어야 하고 (`FirebaseConfigGuard`), 쓰는 권한의 Provider 모듈을 의존해야 합니다 (`PermissionProviderGuard`).
 
-예외 목록(`ALLOWLIST`)은 비어 있고, 6개 앱이 모두 규격을 지킵니다.
+예외 목록(`ALLOWLIST`)은 비어 있고, 7개 앱이 모두 규격을 지킵니다.
 
 ## 새 기능을 어디에 만드는가
 

@@ -1,15 +1,19 @@
 # shared/core/firebase
 
-6개 모듈. Gradle 경로는 `:shared:core:firebase:<이름>`. Firebase SDK 를 Hilt 와 코루틴 환경에 맞게 얇게 감쌉니다.
+10개 모듈. Gradle 경로는 `:shared:core:firebase:<이름>`. Firebase SDK 를 Hilt 와 코루틴 환경에 맞게 얇게 감쌉니다.
 
 | 모듈 | 목적 | 핵심 기술 | project 의존 |
 |---|---|---|---|
 | core | Firebase BOM, `@FirebaseGson`, INTERNET 권한의 뿌리 | Firebase BOM, Hilt | 없음 |
 | auth | FirebaseAuth 콜백 API 를 suspend 로 변환 | firebase-auth, 코루틴 | core |
+| app-check | App Check 공급자 설치와 서버 요청 토큰 헤더 | App Check, OkHttp | core |
 | crashlytics | `CrashReporter` 포트 구현 | Crashlytics | core, fundamental/common |
+| database | Realtime Database 주입과 읽기·쓰기·리스너 도우미 | Realtime Database, Flow | core |
 | firestore | 앱이 지정한 DB 이름으로 Firestore 제공 | Firestore, Hilt | core |
+| functions | callable 호출 골격과 오류 분류 | Functions, Hilt | core |
 | messaging | FCM 수신 서비스, 타입 기반 라우팅, 토픽 구독 | FCM, Hilt Multibinds | core, fundamental/common |
 | remote-config | Remote Config fetch 와 키 조회 | Remote Config, Gson | core, fundamental/common |
+| storage | 업로드 정책과 취소 가능한 업로드, URL 캐시, 멱등 삭제 | Storage, 코루틴 | core |
 
 ## 모듈별 설명
 
@@ -19,6 +23,11 @@
 - **firestore**: `FirebaseFirestore` 를 `@FirestoreDatabaseId` 로 앱이 바인딩한 데이터베이스 이름으로 만듭니다. 기본값이 없어 빠뜨리면 `Dagger/MissingBinding` 으로 빌드가 멈춥니다. Repository 같은 데이터 접근 로직은 두지 않습니다.
 - **messaging**: `AppFcmService` 가 의존만으로 앱 매니페스트에 병합됩니다. 수신 메시지는 `canHandle` 조건으로 타입에 맞는 핸들러에 라우팅되며 핸들러는 Hilt `@IntoSet` 으로 등록합니다. `@Multibinds` 선언이 있어 핸들러가 0개여도 컴파일됩니다. 서비스 keep 규칙을 지우면 R8 릴리스에서만 수신이 멈춥니다.
 - **remote-config**: fetch 와 키 조회를 한 클래스로 감쌉니다. 앱 중립 키 이름만 `RemoteConfigConstants` 에 두고 기본값은 호출부가 넘깁니다. 실패는 값으로 접고 취소만 전파하며, `AppVersion` 모델(앱 업데이트 판정용)은 R8 keep 규칙과 함께 관리합니다.
+
+- **app-check**: 전 앱이 의존합니다. 앱 시작 때 공급자를 설치하고(debug 빌드는 디버그 공급자, 운영 빌드는 Play Integrity), 토큰을 우리 서버 요청 헤더로 붙이는 OkHttp 인터셉터를 제공합니다. 공급자 소스는 debug/release 소스셋으로 나눕니다.
+- **database**: `FirebaseDatabase` 를 앱이 정한 인스턴스 주소로 주입하고, 오류 코드를 잃지 않는 실패 분류와 쓰기, 한 번 읽기, 리스너 Flow 도우미를 줍니다.
+- **functions**: 앱이 바인딩한 리전의 `FirebaseFunctions` 와 callable 호출·계약 검사 골격, 오류 분류, 안전한 Map 읽기를 제공합니다.
+- **storage**: 업로드 정책과 취소되는 업로드, URL 캐시, 멱등 삭제, 형제 파일 정리, 오류 분류를 한곳에 둡니다.
 
 ## 공통 사항
 

@@ -1,5 +1,7 @@
 # social-login 그룹
 
+> 공개 SDK 로 이전 중: [sdk-kotlin-social-login](https://github.com/plumt/sdk-kotlin-social-login) (Maven Central `net.plumt.*`). 아래는 이전 전 이 저장소 구조 설명이며 새로 늘리지 않는다.
+
 소셜 로그인을 계약(`core`), 화면 뼈대(`base`), 제공자(`google`/`kakao`/`naver`)로 나눈 6개 모듈이다. 제공자는 의존을 추가하는 것만으로 활성화된다.
 
 ## social-login-core

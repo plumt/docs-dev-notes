@@ -19,7 +19,7 @@ Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱�
 
 ## API Keys & Credentials
 
-별도 외부 API 키는 없다. 설정은 `clients/qrscanner/config.json` 의 약관·처리방침 URL 키 둘과 전역 설정의 문의 메일 하나를 NativeConfig(XOR 암호화 NDK)로 읽는다. 현재 약관·처리방침 URL 은 비어 있어 더보기 탭에서 해당 두 행이 보이지 않는다. 외부 서비스 의존은 Firebase(Crashlytics, Remote Config)뿐이며 설정 파일은 플레이버별 소스셋에 두고 저장소에 공개하지 않는다.
+별도 외부 API 키는 없다. 설정은 `clients/qrscanner/config.json` 의 약관·처리방침 URL 키 둘과 전역 설정의 문의 메일 하나를 NativeConfig(XOR 암호화 NDK)로 읽는다. 현재 약관·처리방침 URL 은 비어 있어 더보기 탭에서 해당 두 행이 보이지 않는다. 외부 서비스 의존은 Firebase(Crashlytics, Remote Config, App Check)와 AdMob 이며 설정 파일은 플레이버별 소스셋에 두고 저장소에 공개하지 않는다.
 
 ## Features
 
@@ -27,6 +27,8 @@ Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱�
 - **생성**: 로고 이미지와 색상을 지정해 QR 생성, 갤러리 저장(MediaStore, 저장소 권한 불필요), 공유
 - **히스토리**: 스캔 기록 목록, 타입 분류, 즐겨찾기 필터, 삭제, 조회 실패 재시도
 - **더보기**: 앱 버전, 문의, 약관·처리방침, 오픈소스 라이선스, 기록 전체 삭제
+- **광고**: AdMob 배너·네이티브. 광고 대상은 Play 타겟층 16세 이상, 등급 상한 G 로 맞췄고, 설정에서 "광고 제거" 구매·복원이 가능하다(판매 여부는 Remote Config 스위치)
+- **일반 바코드와 앱 링크**: QR 외 일반 바코드도 인식하고, 앱 링크는 실행 전에 확인을 거친다
 - **강제 업데이트**: 스플래시에서 Remote Config 기반 버전 확인 게이트
 
 ## 화면 구성
@@ -39,14 +41,15 @@ Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱�
 - `:apps:qrscanner:feature:splash`, `home`, `history`, `more`
 
 ### Shared Feature Modules
-- `qr:generator` (생성 탭 화면, 앱 feature 로 감싸지 않고 직접 배선), `qr:common:qr-common-impl` (기록 저장소 구현)
+- `qr:generator` (생성 탭 화면, 앱 feature 로 감싸지 않고 직접 배선), `qr:common:qr-common-impl` (기록 저장소 구현), `notice`, `remove-ads`, `permission-notice`
 - `image-picker`, `image-saver`, `share`, `oss-licenses`, `webview`, `legal`
 
 ### Shared Core Modules
 - `common:app-shell` (셸·딥링크 호스트), `firebase:crashlytics`, `fundamental:common`
 
 ### External Services
-- **Firebase**: Crashlytics, Remote Config
+- **Firebase**: Crashlytics, Remote Config, App Check
+- **AdMob**, **Google Play 결제**(광고 제거)
 
 ## Build Configuration
 
@@ -81,7 +84,7 @@ Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱�
 
 ## Notes
 
-- 단일 스캔(ZXing)은 공유 모듈 `qr:scanner` 가 있고 Lottomate 가 쓴다. Q-Ring 은 ML Kit 다중 스캐너를 쓴다
+- 스캔은 공유 모듈 `qr:multi-scanner`(ML Kit 다중 스캐너)를 쓴다. 쓰는 앱이 없어진 ZXing 단일 스캐너 모듈은 삭제됐다
 - 앱 매니페스트에는 권한이 없다. 카메라 등은 쓰는 공유 모듈이 병합한다
 - 릴리스 빌드는 R8/ProGuard 가 적용된다
 

@@ -1,40 +1,46 @@
 # shared/core/common
 
-30개 모듈. Gradle 경로는 `:shared:core:common:<이름>` 입니다. 공통 규약은 [../core.md](../core.md) 를 봅니다.
+35개 모듈. Gradle 경로는 `:shared:core:common:<이름>` 입니다. 공통 규약은 [../core.md](../core.md) 를 봅니다.
 
 ## 요약 표
 
 | 모듈 | 목적 | 핵심 기술 | project 의존 |
 |---|---|---|---|
-| admob | AdMob 초기화와 배너, 네이티브 광고 | play-services-ads, Compose | fundamental/common |
+| admob | AdMob 초기화와 배너, 네이티브 광고 (공개 SDK 로 이전 중) | play-services-ads, Compose | fundamental/common |
+| admob-testing | 광고 유무 화면 캡처용 테스트 헬퍼 (`testImplementation` 전용) | Roborazzi, Robolectric | admob |
 | air-quality | 에어코리아 실시간 대기질 조회 | Retrofit, Gson, Hilt | network |
 | analytics | 분석 이벤트 계약과 방송 Registry | Hilt Multibinds | 없음 |
 | app-shell | 바텀 탭 바, Scaffold 셸, 딥링크 호스트 | Compose, Navigation | navigation-base, designsystem |
 | astro-event | KASI 천문현상 일정과 해설 | Retrofit, 문자열 파서 | network |
 | backup | zip 백업과 검증, 복원 | JDK zip, 체크섬, 코루틴 | 없음 |
+| billing | Play 결제 기반 "광고 제거" 구매·보유 판정 | Play Billing, Hilt | 없음 |
 | calendar | 시스템 캘린더 삽입 화면 호출 | Intent.ACTION_INSERT | fundamental/common |
 | clipboard | 클립보드 복사와 피드백 필요 여부 | ClipboardManager | 없음 |
 | connectivity | 네트워크 상태 Flow | ConnectivityManager, Flow | 없음 |
+| crypto-e2ee | 종단간 암호화 봉투·키 금고 | Tink, Android Keystore | fundamental/common |
 | database | 암호화 Room 팩토리 | Room, SQLCipher, Keystore | fundamental/common |
 | deeplink | 딥링크 화이트리스트 검증, 신뢰 판정 | 순수 Kotlin, Hilt | fundamental/common |
+| delta-sync | 커서 기반 증분 동기화 루프 | 코루틴 | 없음 |
 | designsystem | 테마 토큰과 공통 컴포넌트 | Compose Material3 | 없음 |
 | favorites | 즐겨찾기 포트와 순서 계산 | 순수 Kotlin | 없음 |
-| image-compression | 이미지 축소 디코딩과 압축 | Bitmap, EXIF | fundamental/common |
+| image-compression | 이미지 축소 디코딩과 압축 (공개 SDK 로 이전 중) | Bitmap, EXIF | fundamental/common |
 | location-provider | 현재 GPS 위치 1회 조회 | Hilt, 코루틴 | fundamental/permission, fundamental/common |
-| moon-viewing | 달 보기 좋음 판단 | 순수 규칙 | weather-kma, lunar/calculator |
+| moon-viewing | 달 보기 좋음 판단 | 순수 규칙 | weather-kma, 공개 달 계산 SDK |
 | navigation-base | 딥링크 라우터의 Compose 구현 | Navigation Compose, Hilt | deeplink, fundamental/common |
 | network | OkHttp, Retrofit 공용 인프라 | OkHttp, Retrofit, Hilt | fundamental/common |
+| outbox | 멱등 ID 전송 대기열과 재시도 | 코루틴 | 없음 |
 | paging | Paging3 기본값과 목록 상태 분기 | Paging3, Compose | designsystem |
 | review-prompt | 인앱 리뷰 요청 시점 판정 | Play In-App Review | fundamental/common |
 | search | 검색 디바운스, 최근 검색어 계약 | Flow, 순수 함수 | 없음 |
 | theme-mode | 라이트, 다크, 시스템 모드 계약 | 열거형, 포트 | 없음 |
 | threshold-alert | 히스테리시스 임계값 알림 판정 | 순수 Kotlin | 없음 |
-| time-sync | 서버 시간 기반 기기 시간 보정 | Hilt, 캐시 | fundamental/common |
+| time-sync | 서버 시간 기반 기기 시간 보정 (공개 SDK 로 이전 중) | Hilt, 캐시 | fundamental/common |
 | ui | 앱 공통 Compose 컴포넌트 | Compose, Material3 | fundamental/common, designsystem, navigation-base |
 | ui-base | presentation-base 의 Compose 골격 | Compose, lifecycle-compose | presentation-base, designsystem |
 | weather-kma | 기상청 단기예보 | Retrofit, 격자 변환 | network |
 | widget-base | Glance 홈 위젯 공통 골격 | Glance | designsystem |
 | wikipedia | 위키백과 첫 단락 요약 | Retrofit | network |
+| write-coalescer | 키별 단조 증가 쓰기 합치기 | 코루틴 | 없음 |
 
 ## 인프라와 데이터
 
@@ -45,6 +51,12 @@
 - **time-sync**: 서버 시간으로 기기 시간을 보정하며 의존성 추가만으로 활성화됩니다. 보정 조회는 캐시만 읽고 경과 시간은 `ElapsedRealtimeSource` 로 재며, 실패는 `null` 과 백오프로 처리합니다. `Optional<TimeSyncConfig>` 로 앱이 설정을 교체할 수 있습니다.
 - **image-compression**: 축소 디코딩과 EXIF 회전을 거쳐 한 번에 압축합니다. 중간 Bitmap 은 `finally` 에서 회수하며 스레드는 호출부가 정합니다. Hilt, Compose 를 쓰지 않는 `object` 입니다.
 - **clipboard**: 텍스트를 복사하고 피드백 표시 필요 여부를 반환합니다(플랫폼이 자체 안내를 띄우는 버전 판별). 민감 정보는 `sensitive` 플래그로 표시합니다.
+- **crypto-e2ee**: 종단간 암호화 계약과 Tink 기반 구현입니다. 앱별 봉투 이름공간과 Keystore 별칭은 `E2eeConfig` 로 주입받습니다.
+- **delta-sync**: 커서로 이어 받는 증분 조회 루프와, 커서가 전진하지 않을 때 멈추는 진행 없음 가드를 둡니다.
+- **outbox**: 멱등 ID 를 가진 전송 대기열의 상태 전이, 재시도 한도, 전송 중 상태 복구를 맡습니다.
+- **write-coalescer**: 키별로 값이 커지기만 하는 쓰기(읽음 표시 등)를 디바운스하고 최소 간격과 실패 재시도로 합쳐 씁니다.
+- **billing**: Play 결제로 "광고 제거" 1회 상품의 구매·보유를 판정해 앱들에 공급합니다. 광고 노출 판단은 `adsVisible` 하나로 하며, 보유 판정의 정본은 Play 의 구매 조회이고 캐시는 오프라인 폴백일 뿐입니다. 구매는 반드시 승인합니다.
+- **admob-testing**: 광고가 있는 화면과 없는 화면을 같은 규격으로 캡처하는 테스트 헬퍼로, 앱 코드가 아니라 테스트에서만 의존합니다.
 - **calendar**: 런타임 권한 없이 시스템 캘린더 앱의 이벤트 삽입 화면을 `Intent.ACTION_INSERT` 로 띄웁니다. 앱이 없을 때의 `ActivityNotFoundException` 은 실패 결과로 돌려줍니다.
 
 ## 공공 API 클라이언트 (모두 network 위에 구현)
@@ -53,7 +65,7 @@
 - **air-quality**: 에어코리아 측정소별 실시간 대기질을 `AirQualityInfo` 로 돌려주는 data, domain 모듈입니다. 기본 측정소는 `중구` 이며 키와 baseUrl 은 앱이 한정자로 제공합니다. 화면은 없습니다.
 - **astro-event**: 한국천문연구원 천문현상 API 에서 한 달치 해설과 일정을 받아 종류별로 분류합니다. 발표 전 달(빈 응답)은 캐시하지 않고 실패는 `AstroEventException` 하나로 던집니다.
 - **wikipedia**: 한국어 위키백과 문서의 첫 단락 요약으로 용어 설명을 제공합니다. 동음이의, 없는 문서는 `null` 이며, 표시 시 출처, 라이선스, 원문 링크를 함께 둬야 합니다. 요청에는 ASCII 로만 구성한 User-Agent 가 필요합니다.
-- **moon-viewing**: weather-kma 예보와 lunar 위치 타입을 받아 달을 볼 시각의 하늘상태, 강수로 "좋음, 구름 사이로, 어려움" 판단을 냅니다. 문구는 두지 않고 예보 실패는 `null` 입니다.
+- **moon-viewing**: weather-kma 예보와 공개 달 계산 SDK 의 위치 타입을 받아 달을 볼 시각의 하늘상태, 강수로 "좋음, 구름 사이로, 어려움" 판단을 냅니다. 문구는 두지 않고 예보 실패는 `null` 입니다.
 
 ## 광고, 분석, 알림 판정
 

@@ -12,12 +12,12 @@
  ├─ feature:sky                탭: 이달의 하늘
  ├─ feature:settings           탭: 설정
  └─ feature:notification       FCM 핸들러 (조립 전용, 화면 없음)
-shared:*                       앱 셸, 달 계산(calculator), 내비게이션, 디자인시스템, Firebase 등
+shared:*                       앱 셸, 내비게이션, 디자인시스템, Firebase 등 (달 계산은 공개 SDK 의존)
 ```
 
 - 앱 모듈은 Application·MainActivity 와 `di/`·`navigation/` 패키지만 가진다. 화면 코드가 앱 모듈에 들어오면 `AppModuleShapeGuard` 가 구성 단계에서 빌드를 멈춘다.
 - 의존 방향은 `feature -> core:common -> shared` 한쪽뿐이다. `core:common` 은 feature 를 역참조하지 않는다.
-- 달 천문 계산(삭·상현·망·하현 시각, 월령, 블루문, 슈퍼문 판정)은 앱이 아니라 `:shared:core:lunar:calculator` 에 있고, Hilt 제공은 `core:common` 이 맡는다.
+- 달 천문 계산(삭·상현·망·하현 시각, 월령, 블루문, 슈퍼문 판정)은 앱이 아니라 공개 SDK [sdk-kotlin-astro](https://github.com/plumt/sdk-kotlin-astro) 에 있고(이전 중), Hilt 제공은 `core:common` 이 맡는다.
 - 각 feature 는 `convention.feature` 규약 플러그인으로 library·hilt·compose 설정과 presentation-base·ui-base·designsystem 의존을 받는다.
 
 ## 화면 소유와 내비게이션
@@ -53,7 +53,7 @@ host -> route 매핑 `HOST_TO_ROUTE` 하나가 정본이다. 화이트리스트(
 서버 API 없이 계산 중심으로 흐른다.
 
 ```
-TimeProvider.dayTicks(KST)  ->  ViewModel  ->  calculator (Meeus)  ->  UiState  ->  Compose
+TimeProvider.dayTicks(KST)  ->  ViewModel  ->  달 계산 SDK (Meeus)  ->  UiState  ->  Compose
         (지금 + KST 자정마다)       (init/구독 중 적재)  (위상·이벤트·블루문)
 ```
 

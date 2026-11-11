@@ -7,7 +7,7 @@
 
 | 디렉터리 | 내용 |
 |----------|------|
-| [yunseong-apps](yunseong-apps/README.md) | Android 앱 6개와 Firebase 백엔드, 웹을 한 저장소로 묶은 모노레포의 구조와 설계 |
+| [yunseong-apps](yunseong-apps/README.md) | Android 앱 7개와 Firebase 백엔드, 웹을 한 저장소로 묶은 모노레포의 구조와 설계 |
 | [homeserver](homeserver/README.md) | 집에서 운영하는 서버: 부팅 자동화, 리버스 프록시, 인증서 자동 갱신 |
 | [mattermost](mattermost/README.md) | 셀프호스팅 Mattermost 스택을 git 하나로 묶고 스크립트로 복원하기 |
 | [dev-tools](dev-tools/README.md) | 개발 보조 도구: 로컬 LLM 전환, 작업 위임 스크립트 |

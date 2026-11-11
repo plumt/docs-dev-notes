@@ -10,10 +10,10 @@
 | | `splash-base` | 스플래시 상태홀더·화면 공통 뼈대 | |
 | | `security-root` | 루팅 흔적 검사(값싼 1차 필터) | |
 | qr | `qr-common-api` / `qr-common-impl` | QR 타입 판별·액션·히스토리 계약 / Room+SQLCipher 구현 | [qr](feature/qr.md) |
-| | `scanner` | ZXing 단일 스캐너 다이얼로그 | |
+| | `qr-common-ui` | QR 종류 아이콘·기록 한 줄 등 공용 Compose 조각 | |
 | | `multi-scanner` | ML Kit 멀티 스캐너 + 바운딩 박스 | |
 | | `generator` | ZXing QR 생성 화면 | |
-| social-login | `social-login-core` / `-base` | 계약·모델·UseCase / 로그인 화면 뼈대 | [social-login](feature/social-login.md) |
+| social-login (공개 SDK 로 이전 중) | `social-login-core` / `-base` | 계약·모델·UseCase / 로그인 화면 뼈대 | [social-login](feature/social-login.md) |
 | | `-google` / `-kakao` / `-naver` | 제공자별 구현 | |
 | lock | `lock-api` / `lock-impl` / `lock-ui` | 앱 잠금(패턴·PIN·생체) 계약 / 저장·암호화 / 화면 | [lock](feature/lock.md) |
 | notification | `notification-inbox-api` / `-impl` / `-ui` | 알림함 계약 / 저장·수신 / 화면 | [notification](feature/notification.md) |
@@ -25,11 +25,16 @@
 | | `coachmark` | 스크림·구멍·말풍선 안내 오버레이 | |
 | | `onboarding` | 스와이프 온보딩 화면 | |
 | | `legal` | 약관 화면과 표시 방식 포트 | |
+| | `notice` | 공지사항 목록·설정 행 배지·정책 변경 팝업·시작 팝업 | |
+| | `permission-notice` | 접근권한 사전 고지 화면과 최초 1회 게이트 | |
+| | `remove-ads` | 설정 화면용 "광고 제거"·"구매 복원" 행 | |
 | | `oss-licenses` | 오픈소스 라이선스 화면 | |
 | | `settings-ui` | 설정·더보기 화면 골격 | |
 | | `webview` | 범용 WebView 화면 | |
 
-`qr` 디렉터리 자체는 소스가 없는 묶음 폴더이고, 하위 5개 모듈만 Gradle 에 include 된다.
+`qr` 디렉터리 자체는 소스가 없는 묶음 폴더이고, 하위 5개 모듈(`qr-common-api`·`-impl`·`-ui`, `multi-scanner`, `generator`)만 Gradle 에 include 된다. 쓰는 앱이 없어진 ZXing 단일 스캐너(`scanner`)는 삭제됐다.
+
+총 33개 Gradle 모듈이다. 소셜 로그인 그룹은 [sdk-kotlin-social-login](https://github.com/plumt/sdk-kotlin-social-login) 공개 SDK 로 이전 중이며, 이 문서는 현재 저장소에 남아 있는 구조만 설명한다.
 
 ## 공통 패턴
 

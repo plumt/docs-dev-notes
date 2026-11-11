@@ -13,7 +13,7 @@
 
 ## Description
 
-서울시 버스 정보, 내 주변 정류장, 대기질을 4개 탭으로 묶은 독립 앱이다. 서울 열린데이터광장의 버스 API 9개를 도메인 계약으로 감싸 노선 검색과 실시간 위치를 제공하고, 카카오맵 위에 버스와 정류장을 그린다. 상세 구조는 [architecture.md](architecture.md) 를 본다.
+서울시 버스·지하철 실시간 정보, 내 주변 정류장, 대기질을 5개 탭(더보기 포함)으로 묶은 독립 앱이다. 서울 열린데이터광장의 버스 API 9개를 도메인 계약으로 감싸 노선 검색과 실시간 위치를 제공하고, 카카오맵 위에 버스와 정류장을 그린다. 상세 구조는 [architecture.md](architecture.md) 를 본다.
 
 ## API Keys & Credentials
 
@@ -21,12 +21,14 @@
 
 | Key Name | Purpose | Where to get it |
 |----------|---------|-----------------|
-| `seoul_bus_service_key` | 서울 버스 공공 API 서비스 키 | 서울 열린데이터광장 (data.seoul.go.kr) |
 | `kakao_map_app_key` | 카카오맵 SDK 앱 키 (dev·prod 별도 등록) | Kakao Developers |
-| `air_quality_service_key` | 대기질(에어코리아) 서비스 키 | 공공데이터포털. 현재 빈 값 |
+| `admob_app_id` / `admob_banner_id` / `admob_native_id` | 광고 앱 ID와 단위 | AdMob |
+| `app_privacy_policy_url` / `app_terms_of_service_url` | 개인정보 처리방침·이용약관 | 자체 웹 |
 | `support_email` | 문의 메일 | 전 앱 공통 설정(`global-config`)에서 공급 |
 
-- release 빌드는 서울 버스 키와 카카오맵 키가 없거나 비면 빌드 전 검증에서 실패하고, debug 는 경고만 낸다
+서울 버스·지하철·대기질 공공 API 키는 앱에 두지 않는다. 서버 프록시가 App Check 검증을 거친 요청에 키를 붙여 전달한다.
+
+- release 빌드는 카카오맵 키(그리고 운영 빌드는 약관·처리방침 URL)가 없거나 비면 빌드 전 검증에서 실패하고, debug 는 경고만 낸다
 - 서명 키스토어는 dev 플레이버와 prod 플레이버가 서로 다르며, 경로와 비밀번호는 환경변수 또는 `local.properties` 로 받는다
 
 ## Features
@@ -35,6 +37,10 @@
 - **내 주변**: 위치 권한과 GPS 를 거쳐 반경 500m 정류장과 즐겨찾는 정류장을 나열한다
 - **대기질**: 에어코리아 측정소 대기질을 한 화면으로 보여준다
 - **더보기**: 앱 버전, 문의, 오픈소스 라이선스 진입점
+- **지하철**: 호선 목록·즐겨찾는 역·역 검색, 세로 노선도, 역 도착정보 시트. 실시간 위치·도착·막차는 서버 프록시로 받는다
+- **막차 알림**: 역·정류장의 막차 출발 N분 전 로컬 알림 규칙을 저장하고 예약한다
+- **홈 위젯**: 즐겨찾기 정류장·역 한 곳의 도착정보를 Glance 위젯으로 띄운다
+- **광고**: AdMob 배너·네이티브, 설정에서 "광고 제거" 구매·복원
 - **버스 지도**: 카카오맵 위에 노선 버스의 실시간 위치를 30초 주기로 갱신한다
 - **정류장 상세**: 정류장의 도착 안내와 경유 노선 카드
 
@@ -43,15 +49,19 @@
 ### App-specific Modules
 - `:apps:moduta:core:database` - SQLCipher 로 암호화한 Room DB (캐시, 즐겨찾기)
 - `:apps:moduta:core:seoul-bus` - 서울 버스 API 도메인과 데이터 레이어
-- `:apps:moduta:feature:bus-search` / `nearby-station` / `air-quality` / `settings` - 4개 탭
+- `:apps:moduta:core:seoul-subway` - 서울 지하철 실시간 위치·도착·막차 데이터, 번들 노선도
+- `:apps:moduta:core:last-call` - 막차 알림 규칙 저장·발화 시각 계산·예약
+- `:apps:moduta:core:widget` - 즐겨찾기 도착정보 홈 위젯과 갱신 워커
+- `:apps:moduta:feature:bus-search` / `subway` / `nearby-station` / `air-quality` / `settings` - 5개 탭
+- `:apps:moduta:feature:splash` - 버전 확인 게이트
 - `:apps:moduta:feature:bus-map` - 지도 화면과 정류장 상세
 
 ### Shared Modules
-- `app-shell` (앱 셸, 딥링크 호스트, 내비게이션·테마), `location-provider`, `permission-location`, `air-quality`, `fundamental:common`, `fundamental:permission`
+- `app-shell` (앱 셸, 딥링크 호스트, 내비게이션·테마), `location-provider`, `permission-location`, `air-quality`, `admob`, `billing`, `app-update`, `notice`, `remove-ads`, `firebase:{crashlytics,app-check}`, `fundamental:common`, `fundamental:permission`
 
 ### External Services
-- Kakao Map SDK, 서울 열린데이터광장 버스 API, 에어코리아 대기질 API
-- 광고 SDK 와 Firebase 는 쓰지 않는다
+- Kakao Map SDK, 서울 열린데이터광장 버스·지하철 API, 에어코리아 대기질 API (키는 앱이 아니라 서버 프록시가 붙인다)
+- Firebase(Crashlytics, App Check), AdMob, Google Play 결제(광고 제거)
 
 ## Build Configuration
 

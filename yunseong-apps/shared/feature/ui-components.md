@@ -10,6 +10,9 @@
 | legal | 약관 화면과 표시 방식 포트 | `LegalContentSource.Url`(웹뷰, 배포 없이 수정) 또는 `Embedded`(오프라인 가능)를 값으로 표현. 웹뷰는 다른 그룹이라 직접 부를 수 없어 앱 NavGraph 가 분기. `LegalDocumentScreen` 은 상태홀더 없이 조항을 카드로 펼침 | qrscanner |
 | oss-licenses | 오픈소스 라이선스 화면과 설정 행 | AboutLibraries Gradle 플러그인이 의존 그래프에서 `aboutlibraries.json` 을 생성하고 닫힌(exported=false) Activity 가 `LibrariesContainer` 로 렌더. 진입은 `OssLicensesLauncher` | 6개 앱 |
 | settings-ui | 설정·더보기 화면 골격 | `SettingsScaffold` 가 배경·여백(20dp)·섹션 순서(앱 섹션, 버전, 정보, 꼬리말)를 고정하고 앱은 제목과 고유 섹션만 정함. 값이 없으면 행을 그리지 않는 것이 계약. 라이선스 행은 슬롯 | diding, fxrate, lottomate, lunar, moduta, qrscanner |
+| notice | 공지사항 목록·설정 행 N 배지·정책 변경 팝업·시작 팝업 | 배지와 정책 판단은 `NoticeRules` 한 곳에서 한다. 정책 버전은 사용자가 확인했을 때만 저장하고 조회 실패는 다음 실행으로 넘긴다. 설정 UI·웹뷰는 의존하지 않고 섹션 포장과 라우트 등록은 앱이 한다 | 여러 앱 |
+| permission-notice | 접근권한 사전 고지 화면과 "처음 설치·권한 추가 때만 한 번" 게이트 | 이 모듈은 권한을 요청하지 않고 알리기만 한다. 다시 띄울지는 항목 key(매니페스트 권한 이름) 집합으로만 판정하고, 매니페스트에 권한을 넣지 않는다 | 여러 앱 |
+| remove-ads | 설정 화면의 "광고 제거"·"구매 복원" 행 | 행만 내고 섹션 포장은 앱이 한다. 판매 여부는 Remote Config 스위치로 정하며 진행 중 클릭은 무시한다 | 여러 앱 |
 | webview | 제목과 URL 을 받는 범용 WebView 컴포저블 | `AndroidView` factory 에서 JS·DOM Storage 켜고 캐시 `LOAD_NO_CACHE`, 줌 끔. `WebViewSchemeValidator`(순수 문자열 판별, JVM 테스트 가능), `ExternalAppRegistry`(카드사·간편결제 스킴), `WebViewSchemeClient`(인텐트 실행·마켓 폴백), `WebViewPopupChromeClient`(새 창 URL 을 외부로). `intent://` 는 selector 를 지우고 `NEW_TASK` 만 남겨 실행. `INTERNET` 권한 선언 | lottomate, qrscanner |
 
 ## 공통 설계 결정

@@ -1,28 +1,30 @@
 # shared/core 개요
 
-`shared/core` 는 모든 앱과 shared feature 가 공통으로 기대는 인프라 계층입니다. 총 53개 Gradle 모듈이 5개 그룹으로 나뉩니다. 화면이 있는 기능은 `shared/feature` 가, 앱 전용 코드는 `apps/*` 가 맡고, 이 계층은 "계약, 순수 규칙, 얇은 SDK 래퍼, 공통 UI 골격"만 둡니다.
+`shared/core` 는 모든 앱과 shared feature 가 공통으로 기대는 인프라 계층입니다. 총 61개 Gradle 모듈이 4개 그룹으로 나뉩니다(달 천문 계산 그룹은 공개 SDK 로 이전 중이라 이 저장소에서 빠졌습니다). 화면이 있는 기능은 `shared/feature` 가, 앱 전용 코드는 `apps/*` 가 맡고, 이 계층은 "계약, 순수 규칙, 얇은 SDK 래퍼, 공통 UI 골격"만 둡니다.
 
 ## 그룹별 모듈 표
 
 | 그룹 | 모듈 수 | 역할 | 상세 |
 |---|---|---|---|
-| common | 30 | 네트워크, DB, 디자인 시스템, 광고, 공공 API 클라이언트, 기능별 계약 | [core/common.md](core/common.md) |
-| firebase | 6 | Firebase SDK 를 Hilt 와 코루틴에 맞게 감싼 래퍼 | [core/firebase.md](core/firebase.md) |
+| common | 35 | 네트워크, DB, 디자인 시스템, 광고, 공공 API 클라이언트, 기능별 계약 | [core/common.md](core/common.md) |
+| firebase | 10 | Firebase SDK 를 Hilt 와 코루틴에 맞게 감싼 래퍼 | [core/firebase.md](core/firebase.md) |
 | fundamental | 5 | 최하위 기반(시각, 로깅, 설정), 권한 계약, 상태홀더 계약, 알람, 로컬 알림 | [core/fundamental.md](core/fundamental.md) |
-| lunar | 1 | 네트워크 없는 순수 Kotlin 천문 계산 | [core/lunar.md](core/lunar.md) |
+| lunar | 0 | 공개 SDK 로 이전 중 (옛 순수 Kotlin 천문 계산) | [core/lunar.md](core/lunar.md) |
 | permissions | 11 (+ 우산 디렉터리) | 권한 하나당 모듈 하나인 Provider 구현 | [core/permissions.md](core/permissions.md) |
 
-### common (30)
-admob, air-quality, analytics, app-shell, astro-event, backup, calendar, clipboard, connectivity, database, deeplink, designsystem, favorites, image-compression, location-provider, moon-viewing, navigation-base, network, paging, review-prompt, search, theme-mode, threshold-alert, time-sync, ui, ui-base, weather-kma, widget-base, wikipedia
+### common (35)
+admob, admob-testing, air-quality, analytics, app-shell, astro-event, backup, billing, calendar, clipboard, connectivity, crypto-e2ee, database, deeplink, delta-sync, designsystem, favorites, image-compression, location-provider, moon-viewing, navigation-base, network, outbox, paging, review-prompt, search, theme-mode, threshold-alert, time-sync, ui, ui-base, weather-kma, widget-base, wikipedia, write-coalescer
 
-### firebase (6)
-core, auth, crashlytics, firestore, messaging, remote-config
+공개 SDK 로 이전 중인 모듈: `admob`(광고, [sdk-kotlin-ads](https://github.com/plumt/sdk-kotlin-ads)), `image-compression`(이미지 압축, [sdk-kotlin-image](https://github.com/plumt/sdk-kotlin-image)), `time-sync`(시간, [sdk-kotlin-time](https://github.com/plumt/sdk-kotlin-time)). 자세한 내용은 SDK 저장소를 봅니다.
+
+### firebase (10)
+core, auth, app-check, crashlytics, database, firestore, functions, messaging, remote-config, storage
 
 ### fundamental (5)
 common, permission, presentation-base, alarm, local-notification
 
-### lunar (1)
-calculator
+### lunar (0)
+달 위상·절기 계산은 공개 SDK [sdk-kotlin-astro](https://github.com/plumt/sdk-kotlin-astro)(`net.plumt.astro:lunar`)로 옮겼습니다. 이전 중이며 상세는 [core/lunar.md](core/lunar.md) 한 줄만 둡니다.
 
 ### permissions (11)
 permission-core, permission-bluetooth, permission-calendar, permission-camera, permission-contacts, permission-gallery, permission-location, permission-location-background, permission-microphone, permission-motion, permission-notification
@@ -34,7 +36,7 @@ common  ──►  fundamental/common (최하위)
    │            ▲
    ├──► firebase/* ──► firebase/core
    └──► fundamental/permission ◄── permissions/permission-*
-lunar/calculator : 어느 모듈도 의존하지 않는 순수 모듈 (moon-viewing 이 소비)
+(달 계산은 외부 공개 SDK 의존 — moon-viewing 이 소비)
 ```
 
 - `fundamental/common` 은 다른 project 를 전혀 의존하지 않는 최하위 모듈이며, 저장소에서 직접 의존하는 모듈 수가 가장 많습니다.
