@@ -16,8 +16,8 @@ Android 앱 7개와 Firebase 백엔드, React 웹을 한 저장소에서 관리�
 
 | 앱 | 한 줄 소개 | 패키지 | Flavor | 문서 |
 |----|-----------|--------|--------|------|
-| Lottomate | 로또 번호 관리, 당첨 확인, 통계, 당첨 푸시 알림 | `com.yunseong.lottomate` | dev / prod | [apps/lottomate](apps/lottomate/README.md) |
-| Lunar | 달 위상 대시보드와 달력, 달 이벤트 알림 | `com.yun.lunarphase` | dev / prod | [apps/lunar](apps/lunar/README.md) |
+| Lottomate (로픽) | 로또 번호 관리, 당첨 확인, 통계, 당첨 푸시 알림. [Google Play](https://play.google.com/store/apps/details?id=com.plumt.lottomate) 출시, 1.0.8 | `com.plumt.lottomate` | dev / prod | [apps/lottomate](apps/lottomate/README.md) |
+| Lunar (루나) | 달 위상 대시보드와 달력, 달 이벤트 알림. [Google Play](https://play.google.com/store/apps/details?id=com.plumt.lunar) 출시, 1.3.10 | `com.plumt.lunar` | dev / prod | [apps/lunar](apps/lunar/README.md) |
 | QRScanner (Q-Ring) | QR 다중 스캔, 생성, 이력 | `com.yunseong.qring` | dev / prod | [apps/qrscanner](apps/qrscanner/README.md) |
 | Diding | 알람 기반 TODO·일정 관리 | `com.yunseong.diding` | dev / prod | [apps/diding](apps/diding/README.md) |
 | Moduta | 서울시 버스·지하철 실시간 정보, 막차 알림, 지도 | `com.yunseong.moduta` | dev / prod | [apps/moduta](apps/moduta/README.md) |

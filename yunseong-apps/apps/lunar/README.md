@@ -1,18 +1,19 @@
-# Lunar Phase
+# Lunar (루나)
 
-달의 위상을 보여 주는 앱이다. 위상·음력 일자·조도·다가오는 삭망 같은 값을 서버 API 없이 Meeus 천문 알고리즘으로 기기에서 직접 계산한다. Jetpack Compose 와 멀티모듈 구조(앱 조립 모듈 + 화면별 feature 모듈)로 만들었다.
+달의 위상을 보여 주는 앱이다. Google Play 에 [출시](https://play.google.com/store/apps/details?id=com.plumt.lunar)했다. 위상·음력 일자·조도·다가오는 삭망 같은 값을 서버 API 없이 Meeus 천문 알고리즘으로 기기에서 직접 계산한다. Jetpack Compose 와 멀티모듈 구조(앱 조립 모듈 + 화면별 feature 모듈)로 만들었다.
 
 상세 문서: [architecture.md](architecture.md) (구조·설계 결정) · [features.md](features.md) (화면·기능별 동작)
 
 ## Basic Information
 
-- **App Name**: Lunar Phase (dev 플레이버 표시 이름은 "달의 위상 DEV")
-- **Package ID**: `com.yun.lunarphase` (dev 플레이버는 `.dev` 접미사)
-- **Version Code**: 7
-- **Version Name**: 1.3.2
+- **App Name**: 루나 (dev 플레이버는 DEV 표시)
+- **Package ID**: `com.plumt.lunar` (dev 플레이버는 `.dev` 접미사, 코드 namespace 는 `com.yun.lunarphase`)
+- **Version Code**: 15
+- **Version Name**: 1.3.10
 - **Min SDK**: 29
 - **Target SDK**: 36
-- **Status**: Active
+- **Status**: Released (Google Play 프로덕션, 2026-11-24)
+- **Google Play**: [루나](https://play.google.com/store/apps/details?id=com.plumt.lunar)
 - **Gradle 경로**: `:apps:lunar`
 - **플레이버**: `dev` · `prod` (규약 플러그인의 allowlist 가 생성)
 - **딥링크 스킴**: `yunseong-lunar`
@@ -31,7 +32,7 @@
 - **이달의 하늘**: KASI 월별 해설과 일정, 일정을 누르면 위키백과 용어 설명 펼침
 - **설정**: 달 알림 토글 2종(달의 위상 / 특별한 달), 앱 버전, 개인정보 처리방침, 문의, 오픈소스 라이선스
 - **알림**: FCM data 메시지를 로컬 알림으로 변환(새달·보름달·슈퍼문·미니문·블루문), 알림함, 첫 실행 시 알림 구독 안내
-- **스플래시와 강제 업데이트**: 페이드인 뒤 버전 확인, 조회 실패 시 그대로 진행
+- **스플래시와 강제 업데이트**: 페이드인 뒤 버전 확인, 조회 실패 시 연결 실패 안내와 다시 시도
 - **광고**: AdMob 배너(바텀바와 함께 표시)
 - **딥링크**: `yunseong-lunar://home | calendar | explore | settings | notifications` 형태(경로 없는 host 만 허용)
 
@@ -86,7 +87,28 @@ Hilt(DI), Jetpack Compose + Material 3, Kotlin Coroutines/Flow, Joda-Time, DataS
 
 ## Release Notes
 
-### v1.3.2 (Current)
+### v1.3.10 (Current)
+- 위상 사건(삭·상현·망·하현) 시각에 서버 푸시와 같은 ΔT 보정을 적용해 달력·홈·하늘이 같은 값을 표기
+- 예보 요청에 8초 상한을 두고, 실패하면 같은 높이의 실패 카드와 다시 시도 버튼 표시
+- 설정 알림 스위치를 행 단위 한 덩어리로 정리, 스플래시 달 접근성 이름을 오늘 위상 기준으로 고정
+- 달력·하늘·홈 날씨 카드·달 탐구 카드 높이를 시안 값에 고정
+
+### v1.3.9
+- 본문 글꼴을 Pretendard, 숫자를 Roboto Mono 로 변경
+- 글자 배율 2.0 에서 겹침·잘림 수정, 홈 날씨 카드 높이 고정
+- 알림 권한 요청을 권한 안내가 닫힌 뒤 한 번만 실행
+
+### v1.3.4 ~ v1.3.5
+- 같은 달에 두 번 드는 위상이 홈·달력에서 빠지던 문제 수정
+- 위치를 대략 위치로 낮추고 마지막 위치 대체 규칙 추가
+- 알림함 빈 상태, 업데이트 팝업 문구, 홈 위치 칩 정렬 수정
+
+### v1.3.3
+- 오프라인 새 실행 차단(스플래시 확인 실패 시 차단, 온라인 재시도 시 통과)
+- 위치·알림 권한 요청을 새 권한 SDK 로 이전
+- 달 이벤트 조회 자동 재시도(연결 실패·시간 초과·5xx 만 최대 2회)
+
+### v1.3.2
 - 달 위상 표시를 Meeus 계산 하나로 일원화, 공공데이터 API 경로 제거
 - 이달의 하늘 탭(KASI 해설·일정, 위키백과 용어 설명) 추가
 - 홈에 월출·월몰과 달 보기 날씨 추가
