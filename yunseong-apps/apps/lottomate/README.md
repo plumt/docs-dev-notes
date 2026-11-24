@@ -2,13 +2,14 @@
 
 ## Basic Information
 
-- **App Name**: Lottomate
-- **Package ID**: `com.yunseong.lottomate` (dev 플레이버는 `.dev` 접미사)
-- **Version Code**: 1
-- **Version Name**: 1.0.0
+- **App Name**: 로픽 (Lottomate)
+- **Package ID**: `com.plumt.lottomate` (dev 플레이버는 `.dev` 접미사)
+- **Version Code**: 9
+- **Version Name**: 1.0.8
 - **Min SDK**: 29
 - **Target SDK**: 36
-- **Status**: Active Development
+- **Status**: Released (Google Play 프로덕션, 2026-11-17)
+- **Google Play**: [로픽](https://play.google.com/store/apps/details?id=com.plumt.lottomate)
 - **딥링크 스킴**: `yunseong-lottomate`
 
 상세 설계는 [architecture.md](architecture.md), 모듈별 책임은 [modules.md](modules.md) 를 본다.
@@ -45,7 +46,7 @@ API 키와 URL 은 `clients/lottomate/config.json`(`common`·`dev`·`prod` 세 �
 - **FCM 알림**: 당첨 결과(토요일 20:55 KST), 구매 알림(토요일 18:00 KST). 알림 설정에서 토픽 구독을 토글
 - **알림함**: 앱 내 알림 이력. 항목의 딥링크로 화면 이동
 - **강제 업데이트**: Remote Config 기반 버전 확인 게이트
-- **광고**: AdMob 배너·네이티브, 설정에서 "광고 제거" 구매·복원(판매 여부는 Remote Config 스위치로 제어)
+- **광고**: AdMob 배너·네이티브. 결제 판매 스위치(기본 꺼짐)가 꺼진 빌드는 결제 구현과 BILLING 권한을 빼고 광고를 항상 노출한다
 - **공지사항**: 공지 목록과 N 배지, 정책 변경 팝업
 
 ## 화면 구성
@@ -67,7 +68,6 @@ API 키와 URL 은 `clients/lottomate/config.json`(`common`·`dev`·`prod` 세 �
 ### External Services
 - **Firebase**: Crashlytics, Cloud Messaging, Remote Config, Firestore, App Check (당첨번호는 Cloud Functions 가 DB 에 기록)
 - **AdMob**: 배너·네이티브 광고
-- **Google Play 결제**: 광고 제거 1회 상품
 
 ## Build Configuration
 
@@ -75,9 +75,9 @@ API 키와 URL 은 `clients/lottomate/config.json`(`common`·`dev`·`prod` 세 �
 
 | 변형 | applicationId | 서명 | 축소 |
 |---|---|---|---|
-| devDebug | `com.yunseong.lottomate.dev` | dev 키 | 끔 |
-| prodDebug | `com.yunseong.lottomate` | 운영 키 | 끔 |
-| prodRelease | `com.yunseong.lottomate` | 운영 키 | R8 |
+| devDebug | `com.plumt.lottomate.dev` | dev 키 | 끔 |
+| prodDebug | `com.plumt.lottomate` | 운영 키 | 끔 |
+| prodRelease | `com.plumt.lottomate` | 운영 키 | R8 |
 
 ```bash
 ./gradlew :apps:lottomate:assembleDevDebug     # dev 디버그
@@ -112,6 +112,21 @@ E2E 는 testTag 기반 Appium 하네스(콜드 스타트 스모크 시나리오)
 - Firebase 설정 파일은 플레이버별 소스셋(`src/dev`, `src/prod`)에 두며 저장소에 공개하지 않는다
 - API 키와 URL 은 `clients/lottomate/config.json` 으로만 관리하고 소스 리터럴로 박지 않는다
 - 앱 이름은 플레이버 소스셋의 리소스에만 있다
+
+## Release Notes
+
+### v1.0.8 (Current)
+- 결제 판매 스위치(기본 꺼짐) 도입, 꺼짐 빌드는 결제 구현·BILLING 권한 제거
+- 스플래시 관문 전 딥링크를 보류했다가 관문 통과 후 전달
+- 런처 라벨·스플래시·문의 제목을 한글 브랜드(로픽)로 정리
+
+### v1.0.7
+- 사진 인식 2단계 전처리와 불일치 칸 재시도, 촬영 실패 시 사진 선택으로 대체
+- 금액·수익률 표기와 큰 글자 레이아웃 정리, 2등 보너스 공 표시
+
+### v1.0.3 ~ v1.0.6
+- 번호 불러오기(카메라 QR, 사진 QR, 구매내역 스크린샷 글자 인식) 신설
+- 구매내역 확정이 막히던 문제와 회차 문서 병합 오류 수정
 
 ## 스크린샷
 
