@@ -3,7 +3,7 @@
 ## Basic Information
 
 - **App Name**: 
-- **Package ID**: 
+- **Package ID**: (출시 앱만. 미출시 앱은 적지 않는다)
 - **Version Code**: 
 - **Version Name**: 
 - **Min SDK**: 29
@@ -14,22 +14,9 @@
 
 [Brief description of what this app does]
 
-## API Keys & Credentials
+## 키와 설정값
 
-### Required Environment Variables
-
-Add these to `local.properties` in the root project:
-
-```properties
-# [App Name] Keys
-KEY_NAME=your_key_here
-```
-
-### Key Details
-
-| Key Name | Purpose | Where to get it | Notes |
-|----------|---------|-----------------|-------|
-| KEY_NAME | Description | URL or service | Any important notes |
+키 이름, 설정 파일 경로, 토픽·컬렉션 이름, 딥링크 스킴 같은 앱 상수는 이 공개 문서에 적지 않는다. "키는 빌드 때 NDK 로 숨긴다" 수준만 쓴다.
 
 ## Features
 

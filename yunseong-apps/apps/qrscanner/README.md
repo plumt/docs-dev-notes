@@ -1,59 +1,51 @@
-# QR Scanner (Q-Ring)
+# QR Scanner (큐링, Q-Ring)
 
 ## Basic Information
 
-- **App Name**: Q-Ring
-- **Package ID**: `com.yunseong.qring` (dev 플레이버는 `.dev` 접미사)
-- **Version Code**: 1
-- **Version Name**: 1.0.0
+- **App Name**: 큐링 (Q-Ring)
+- **Package ID**: `com.plumt.qrscanner`
+- **Version**: 1.0.1 (versionCode 2)
 - **Min SDK**: 29
 - **Target SDK**: 36
-- **Status**: Active Development
-- **딥링크 스킴**: `yunseong-qring`
+- **Status**: Google Play 내부 테스트 트랙 배포(2026-11-26). 프로덕션 트랙은 아직 출시 전
 
 상세 설계는 [architecture.md](architecture.md) 를 본다.
 
 ## Description
 
-Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱이다. 다중 QR 동시 인식(ML Kit), 로고와 색을 넣은 QR 생성(ZXing), 타입별 액션이 붙는 스캔 기록 관리를 제공한다. 앱 모듈은 조립만 하고 화면은 feature 모듈과 공유 모듈에 있다.
-
-## API Keys & Credentials
-
-별도 외부 API 키는 없다. 설정은 `clients/qrscanner/config.json` 의 약관·처리방침 URL 키 둘과 전역 설정의 문의 메일 하나를 NativeConfig(XOR 암호화 NDK)로 읽는다. 현재 약관·처리방침 URL 은 비어 있어 더보기 탭에서 해당 두 행이 보이지 않는다. 외부 서비스 의존은 Firebase(Crashlytics, Remote Config, App Check)와 AdMob 이며 설정 파일은 플레이버별 소스셋에 두고 저장소에 공개하지 않는다.
+큐링은 QR 코드 스캔·생성·히스토리를 4개 탭으로 묶은 독립 앱이다. 스캔·생성·판별은 직접 만든 공개 QR SDK(`net.plumt.qr`)로 하고, 앱은 화면과 기록 저장만 맡는다. 앱 모듈은 조립만 하고 화면은 앱 전용 feature 모듈에 있다.
 
 ## Features
 
-- **스캔(홈)**: 공용 ML Kit 다중 스캐너 화면을 띄워 여러 QR 을 동시에 인식하고 결과를 기록에 저장. 최근 스캔 카드를 누르면 타입별 액션(URL 열기 등) 실행
-- **생성**: 로고 이미지와 색상을 지정해 QR 생성, 갤러리 저장(MediaStore, 저장소 권한 불필요), 공유
-- **히스토리**: 스캔 기록 목록, 타입 분류, 즐겨찾기 필터, 삭제, 조회 실패 재시도
-- **더보기**: 앱 버전, 문의, 약관·처리방침, 오픈소스 라이선스, 기록 전체 삭제
-- **광고**: AdMob 배너·네이티브. 광고 대상은 Play 타겟층 16세 이상, 등급 상한 G 로 맞췄고, 설정에서 "광고 제거" 구매·복원이 가능하다(판매 여부는 Remote Config 스위치)
-- **일반 바코드와 앱 링크**: QR 외 일반 바코드도 인식하고, 앱 링크는 실행 전에 확인을 거친다
-- **강제 업데이트**: 스플래시에서 Remote Config 기반 버전 확인 게이트
-
-## 화면 구성
-
-스플래시(시작) -> 홈 · 생성 · 히스토리 · 더보기 4개 탭. 개인정보 처리방침/이용약관은 바텀바를 끄는 보조 목적지이고 오픈소스 라이선스는 별도 Activity 다.
+- **홈**: 스캔 버튼·QR 생성·사진 스캔이 있는 바이올렛 판, 복사한 링크 줄, 최근 스캔 카드, 즐겨찾기
+- **스캔**: 홈 버튼에서 원이 커지며 열리는 스캔 화면. 여러 코드를 동시에 추적하고, 누른 코드의 결과 시트만 연다. 사진에서 코드를 읽는 것도 같은 형식 규칙을 쓴다
+- **생성**: 링크·텍스트·Wi-Fi·연락처 QR 을 크기·색·로고를 정해 만들고, 갤러리 저장(저장소 권한 불필요)과 공유
+- **히스토리**: 날짜별 묶음 카드, 상세 시트(타입별 액션·즐겨찾기·다시 만들기·복사·삭제), 즐겨찾기 화면, 조회 실패 재시도
+- **더보기**: 앱 버전과 업데이트 표시, 공지사항, 문의, 약관·처리방침, 오픈소스 라이선스, 광고 제거·구매 복원, 기록 전체 삭제
+- **광고**: AdMob 배너·목록 네이티브·종료 팝업. 결제로 광고를 끌 수 있다
+- **시작 관문**: 스플래시의 버전 확인(실패 시 진행 차단), 접근권한 안내, 정책 변경 팝업
 
 ## Dependencies
 
-### App-specific Modules
-- `:apps:qrscanner:feature:splash`, `home`, `history`, `more`
+### App-specific Modules (9개)
+- `:apps:qrscanner` — 조립 전용
+- `feature:splash` · `home` · `history` · `more` · `generator`
+- `core:history` (기록 모델·암호화 Room 저장소) · `core:ui` (기록 줄·종류 아이콘·타입별 액션) · `core:demo-seed` (촬영용 데이터, debug 전용)
 
-### Shared Feature Modules
-- `qr:generator` (생성 탭 화면, 앱 feature 로 감싸지 않고 직접 배선), `qr:common:qr-common-impl` (기록 저장소 구현), `notice`, `remove-ads`, `permission-notice`
-- `image-picker`, `image-saver`, `share`, `oss-licenses`, `webview`, `legal`
+### Shared Modules
+- `app-shell`, `app-update`, `notice`, `permission-notice`, `remove-ads`, `settings-ui`, `oss-licenses`
+- `image-picker`, `image-saver`, `share`, `webview`, `legal`
+- `common:permission`, `common:database`, `common:admob`, `common:billing`, `designsystem`(Paper)
+- `firebase:crashlytics`, `firebase:app-check`, `fundamental:common`
 
-### Shared Core Modules
-- `common:app-shell` (셸·딥링크 호스트), `firebase:crashlytics`, `fundamental:common`
-
-### External Services
-- **Firebase**: Crashlytics, Remote Config, App Check
+### 외부 SDK·서비스
+- **QR SDK** `net.plumt.qr` 0.0.2 (스캔·생성·판별), **권한 SDK** `net.plumt.permission`
+- **Firebase**(앱 전용 프로젝트): Crashlytics, App Check, 버전 확인 API. 서버 쪽은 별도 저장소에서 관리한다
 - **AdMob**, **Google Play 결제**(광고 제거)
 
 ## Build Configuration
 
-플레이버(`dev`, `prod`)·서명·빌드 타입은 Convention Plugin 이 만들며 앱은 재선언하지 않는다. 서명 키는 빌드 타입이 아닌 플레이버 기준(dev 플레이버는 dev 키, prod 는 운영 키)으로 갈린다.
+플레이버(`dev`, `prod`)·서명·빌드 타입은 Convention Plugin 이 만들며 앱은 재선언하지 않는다. 설정 값은 저장소에 두지 않고 빌드 때 NDK 로 구워 넣는다. 운영 릴리스는 약관·처리방침 주소나 운영 광고 키가 비면 빌드 전 검증에서 멈춘다.
 
 ```bash
 ./gradlew :apps:qrscanner:assembleDevDebug     # dev 디버그
@@ -61,32 +53,23 @@ Q-Ring 은 QR 코드 스캔·생성·기록을 4개 탭으로 묶은 독립 앱�
 ./gradlew :apps:qrscanner:installDevDebug      # 기기 설치
 ```
 
-빌드 전 검증(`preBuildVerify`)은 딥링크 스킴과 매니페스트의 일치, release 서명 설정만 검사한다(필수 키·광고 키 목록은 비어 있음).
+Play 업로드는 Jenkins 가 운영 플레이버 AAB 를 내부 테스트 트랙에 올린다.
 
 ## Testing
 
 ```bash
-./gradlew :apps:qrscanner:test                 # 유닛 테스트
-./gradlew :apps:qrscanner:connectedAndroidTest # 계측 테스트
+./gradlew :apps:qrscanner:test                 # 유닛·Robolectric 테스트
 ```
 
-`DeepLinkModuleMappingTest` 가 허용 host 집합과 라우터 매핑의 일치를 검증한다. E2E 는 testTag 기반 Appium 하네스를 쓰며 dev 플레이버 고정이다.
+딥링크 화이트리스트와 라우터 매핑의 일치, 기존 기록 DB 를 그대로 여는지(스키마 호환), 화면별 레이아웃 안정성과 시안 대조용 렌더를 테스트로 고정한다. E2E 는 testTag 기반 Appium 하네스를 쓰며 dev 플레이버 고정이다.
 
 ## Architecture 요약
 
-- **UI**: Jetpack Compose + Material 3, 밝은 종이 테마 하나(시스템 다크 모드를 따르지 않음)
+- **UI**: Jetpack Compose, 공용 Paper 디자인 시스템 위의 밝은 단일 테마(시스템 다크 모드를 따르지 않음)
 - **DI**: Hilt
-- **Navigation**: Navigation Compose, 각 목적지가 바텀바 표시를 직접 제어
-- **Security**: NDK/JNI XOR 암호화 설정
+- **Navigation**: 공용 앱 셸(`ShellHostActivity`)이 테마·관문·딥링크·바텀바를 파생하고 앱은 NavGraph 만 넘긴다
+- **Data**: SQLCipher 로 암호화한 Room
 - **Build System**: Convention Plugins + Version Catalog
-
-자세한 내용은 [architecture.md](architecture.md).
-
-## Notes
-
-- 스캔은 공유 모듈 `qr:multi-scanner`(ML Kit 다중 스캐너)를 쓴다. 쓰는 앱이 없어진 ZXing 단일 스캐너 모듈은 삭제됐다
-- 앱 매니페스트에는 권한이 없다. 카메라 등은 쓰는 공유 모듈이 병합한다
-- 릴리스 빌드는 R8/ProGuard 가 적용된다
 
 ## 스크린샷
 

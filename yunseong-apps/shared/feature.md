@@ -9,10 +9,6 @@
 | app-update | `app-update` | Remote Config 로 강제 업데이트 판정, 외관 교체형 안내 다이얼로그 | [app-update](feature/app-update.md) |
 | | `splash-base` | 스플래시 상태홀더·화면 공통 뼈대 | |
 | | `security-root` | 루팅 흔적 검사(값싼 1차 필터) | |
-| qr | `qr-common-api` / `qr-common-impl` | QR 타입 판별·액션·히스토리 계약 / Room+SQLCipher 구현 | [qr](feature/qr.md) |
-| | `qr-common-ui` | QR 종류 아이콘·기록 한 줄 등 공용 Compose 조각 | |
-| | `multi-scanner` | ML Kit 멀티 스캐너 + 바운딩 박스 | |
-| | `generator` | ZXing QR 생성 화면 | |
 | social-login (공개 SDK 로 이전 중) | `social-login-core` / `-base` | 계약·모델·UseCase / 로그인 화면 뼈대 | [social-login](feature/social-login.md) |
 | | `-google` / `-kakao` / `-naver` | 제공자별 구현 | |
 | lock | `lock-api` / `lock-impl` / `lock-ui` | 앱 잠금(패턴·PIN·생체) 계약 / 저장·암호화 / 화면 | [lock](feature/lock.md) |
@@ -32,13 +28,11 @@
 | | `settings-ui` | 설정·더보기 화면 골격 | |
 | | `webview` | 범용 WebView 화면 | |
 
-`qr` 디렉터리 자체는 소스가 없는 묶음 폴더이고, 하위 5개 모듈(`qr-common-api`·`-impl`·`-ui`, `multi-scanner`, `generator`)만 Gradle 에 include 된다. 쓰는 앱이 없어진 ZXing 단일 스캐너(`scanner`)는 삭제됐다.
-
-총 33개 Gradle 모듈이다. 소셜 로그인 그룹은 [sdk-kotlin-social-login](https://github.com/plumt/sdk-kotlin-social-login) 공개 SDK 로 이전 중이며, 이 문서는 현재 저장소에 남아 있는 구조만 설명한다.
+총 28개 Gradle 모듈이다. QR 스캔·생성 모듈 5개는 2026-11 에 공개 SDK [sdk-kotlin-qr](https://github.com/plumt/sdk-kotlin-qr) 로 옮기고 삭제했다. 소셜 로그인 그룹은 [sdk-kotlin-social-login](https://github.com/plumt/sdk-kotlin-social-login) 공개 SDK 로 이전 중이며, 이 문서는 현재 저장소에 남아 있는 구조만 설명한다.
 
 ## 공통 패턴
 
-- **api / impl / ui 분리**: 저장·수신 등 무거운 의존이 있는 기능은 계약(`-api`), 구현(`-impl`), 화면(`-ui`)으로 나눈다. api 는 Room·KSP·Hilt·SDK 를 끌어오지 않아 배지나 적재처럼 일부만 필요한 소비자가 가볍게 쓴다. 화면은 계약만 의존하고 구현 바인딩은 앱이 함께 넣어 붙인다. (lock, notification-inbox, qr-common, social-login)
+- **api / impl / ui 분리**: 저장·수신 등 무거운 의존이 있는 기능은 계약(`-api`), 구현(`-impl`), 화면(`-ui`)으로 나눈다. api 는 Room·KSP·Hilt·SDK 를 끌어오지 않아 배지나 적재처럼 일부만 필요한 소비자가 가볍게 쓴다. 화면은 계약만 의존하고 구현 바인딩은 앱이 함께 넣어 붙인다. (lock, notification-inbox, social-login)
 - **구현 라이브러리는 `implementation`**: `api` 로 선언하면 소비자에게 전파되므로, 계약 모듈이 노출해야 하는 타입(`Flow`, `FragmentActivity` 등)만 `api` 로 둔다.
 - **포트와 슬롯**: 문구·이미지·저장 여부는 모듈이 갖지 않고 호출부가 주입한다(`legal`, `onboarding`, `coachmark`). 열람 여부 같은 상태는 포트 인터페이스만 두고 구현은 앱이 한다.
 - **교차 참조 가드**: 서로 다른 그룹의 shared-feature 를 직접 참조하면 빌드가 막는다. 조합(예: 약관 URL이면 webview, 아니면 내장 화면)은 앱의 NavGraph 가 한다.

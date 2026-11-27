@@ -1,98 +1,84 @@
-# Q-Ring 아키텍처
+# 큐링 아키텍처
 
-앱 모듈(`:apps:qrscanner`)은 조립 전용이다. 소스는 `QRScannerApplication`, `MainActivity`, `di/` 3파일, `navigation/` 3파일뿐이고 규약 플러그인의 가드가 그 밖의 파일·디렉터리를 구성 단계에서 막는다. 원래 이 앱만 feature 골격이 없어 화면 코드가 전부 앱 모듈에 있었으나 2026-08 에 탭 화면 넷을 `apps/qrscanner/feature/*` 로 분리했다.
+앱 모듈(`:apps:qrscanner`)은 조립 전용이다. Application·MainActivity·DI·내비게이션 조립만 두고, 규약 플러그인의 가드가 그 밖의 파일을 구성 단계에서 막는다. 화면은 앱 전용 feature 모듈, 기록과 공용 UI 조각은 앱 전용 core 모듈에 있다.
 
 ## 모듈 구성
 
 ```
-:apps:qrscanner
- ├─ feature:splash    버전 확인 게이트
- ├─ feature:home      스캔 탭 (공용 다중 스캐너 호출 + 결과 표시 + 기록 저장)
- ├─ feature:history   히스토리 탭
- ├─ feature:more      더보기 탭
- └─ shared:*          qr:generator, qr:common(-impl), image-picker, image-saver, share,
-                      legal, webview, oss-licenses, app-shell, crashlytics ...
+:apps:qrscanner              조립 (셸 명세 + NavGraph)
+ ├─ feature:splash           버전 확인 관문
+ ├─ feature:home             홈 탭 + 스캔 화면
+ ├─ feature:generator        생성 탭
+ ├─ feature:history          히스토리 탭 + 즐겨찾기
+ ├─ feature:more             더보기 탭
+ ├─ core:ui                  기록 줄·종류 아이콘·확인 대화상자·타입별 액션 실행
+ ├─ core:history             기록 모델 + 암호화 Room 저장소 + Hilt 바인딩
+ └─ core:demo-seed           촬영용 기록 (debug 빌드에만)
 ```
 
 | 모듈 | 책임 |
 |---|---|
-| `feature:splash` | 공용 `SplashScaffold` 와 `AppUpdateChecker` 로 버전 확인. 실패 정책은 진행 차단(BLOCK). 로직과 다이얼로그를 직접 만들지 않는다. |
-| `feature:home` | 카메라 UI 를 만들지 않고 `MultiQRScannerScreen`(ML Kit)을 호출. 권한 UseCase 는 해석하지 않고 스캐너에 그대로 전달. 스캔 결과를 `QRHistoryRepository` 로 저장하며 저장 실패해도 화면에 보인 결과는 지우지 않는다. |
-| `feature:history` | 기록 목록과 타입별 액션, 즐겨찾기 필터(화면에서 거르지 않고 저장소 질의를 교체), 삭제, 조회 실패 시 빈 목록 대신 실패 상태와 재시도를 그린다. |
-| `feature:more` | 버전·정보 행(`SettingsScaffold` 위임)과 기록 전체 삭제. 삭제 실패는 사용자에게 알리고 진행 중에는 클릭을 막는다. 문의 메일은 `@SupportEmail` 로만 받는다. |
+| `feature:splash` | 공용 스플래시 base 와 버전 확인기를 그대로 쓴다. 확인 실패 정책은 진행 차단 |
+| `feature:home` | 카메라 미리보기·인식은 SDK 스캐너에 맡기고 권한 요청과 결과 저장만 한다. 저장이 실패해도 방금 읽은 결과는 지우지 않는다 |
+| `feature:generator` | QR 내용 문자열은 SDK 페이로드로 만들고, 로고 선택·저장·공유·기록은 콜백으로 앱에 위임한다 |
+| `feature:history` | 히스토리와 즐겨찾기는 질의만 다르고 ViewModel 하나를 공유한다. 조회 실패는 빈 목록이 아닌 실패 상태로 그린다 |
+| `feature:more` | 설정 화면 뼈대는 공용 `SettingsScaffold` 에 위임하고 기록 전체 삭제만 직접 한다 |
+| `core:history` | 기록 저장소 계약과 Room 구현. 이 모듈을 의존하면 저장소 바인딩이 앱 그래프에 실린다 |
+| `core:ui` | 상태 없는 조각만 둔다. 종류 판정 하나에서 아이콘·문구·실제 액션이 나온다 |
 
-각 feature 는 `uiState` 로 상태를 노출하고 `convention.feature` 규약 플러그인(Hilt·Compose 포함)을 쓴다.
+## 화면 조립
 
-## 내비게이션과 화면 조립
+- `MainActivity` 는 공용 앱 셸에 앱 명세 하나를 넘긴다. 셸이 테마·관문 복원·딥링크·정책 변경 팝업·바텀바를 파생하고 앱은 NavGraph 만 그린다. 큐링이 이 셸의 첫 채택 앱이다(2026-11)
+- `QRScannerApplication` 은 공용 `StartupApplication` 을 상속할 뿐 본문이 없다. 로거 연결·Crashlytics 수집·권한 관리자 생성은 각 모듈이 시작 작업으로 기여한다
+- 스캔 화면은 별도 창(Dialog)이 아니라 셸 겹층이다. 홈 스캔 버튼 자리에서 원이 커지며 열리고, 연출이 끝난 뒤 카메라를 켠다
+- 테마는 공용 Paper 위의 밝은 단일 테마다. 앱 색은 테마 자리로만 넣고 호출부 색 인자는 검사가 막는다
 
-| 라우트 | 화면 | 소유 | 바텀바 |
-|---|---|---|---|
-| `splash` | 스플래시 | `feature:splash` | 숨김 |
-| `home` | 스캔 | `feature:home` | 표시 |
-| `generator` | QR 생성 | `shared:feature:qr:generator` | 표시 |
-| `history` | 히스토리 | `feature:history` | 표시 |
-| `more` | 더보기 | `feature:more` | 표시 |
-| `privacy_policy` · `terms_of_service` | 웹뷰 또는 내장 문서 | `webview` · `legal` | 숨김 |
-| `open_source_license` | 별도 Activity | `oss-licenses` | 숨김 |
+## 공개 SDK 로 옮긴 부분
 
-- 시작 목적지는 `splash` 이고 홈으로 갈 때 `popUpTo(inclusive)` 로 백스택에서 제거한다.
-- `MainActivity` 는 edge-to-edge, Crashlytics 초기화, 콜드 스타트 딥링크 적재, `setContent` 순으로 돌고 `AppThemeHost` -> 딥링크 배선 -> `AppShell` -> `NavGraph` 로 조립한다.
-- `QRScannerApplication` 은 `onCreate` 에서 로거에 크래시 리포터를 연결한다. 이 한 줄이 빠졌을 때 릴리스의 `Logger.e` 가 전부 버려졌던 적이 있어 지우면 안 되는 호출로 관리한다.
-- 테마는 밝은 종이 단일 테마이며 시스템 다크 모드를 따르지 않는다.
+| 이전 | 지금 | 이유 |
+|---|---|---|
+| 공용 QR 모듈 5개(기록 계약·구현·UI, 다중 스캐너, 생성기) | QR SDK `net.plumt.qr` + 앱 전용 `core:history`·`core:ui`·`feature:generator` | 이 앱만 쓰던 코드였다. 스캔·생성·판별은 SDK 로 모으고 앱 고유 부분만 앱으로 가져왔다 |
+| 공용 권한 모듈과 Provider 가드 | 권한 SDK `net.plumt.permission` + 연결 모듈 `common:permission` | 앱마다 같은 권한 연결 코드를 베끼고 있었다 |
 
-## 생성 탭 배선
+QR 모듈을 옮기면서 DB 파일·테이블·스키마 버전을 그대로 두었다. 업데이트해도 기존 기록이 열리고, 스키마 호환 테스트가 이를 지킨다.
 
-생성 화면 자체가 공유 모듈(`qr:generator`)이라 앱 feature 로 한 번 더 감싸지 않았다. 대신 화면이 필요로 하는 주변 동작을 콜백으로 앱이 직접 연결한다.
+## 디자인 정본
 
-| 동작 | 사용하는 것 |
-|---|---|
-| 로고 선택 | `rememberImagePicker` (Photo Picker, 권한 불필요) |
-| 갤러리 저장 | `SaveImageToGalleryUseCase` (MediaStore). IO 전환은 UseCase 가, 토스트는 메인에서 |
-| 공유 | `ImageSharer.share` |
+2026-11-24 에 큐링 전 화면 시안을 새로 그리고, 이 시안을 가족 앱 공용 Paper 디자인 시스템의 정본으로 확정했다. 서체·아이콘·다이얼로그·설정 행·하단 탭 같은 공용 부품 값은 정본에 두고, 앱 문서에는 큐링만 다른 색·버튼 규칙만 적는다. 시안과 실제 화면은 렌더 테스트와 대조 도구로 맞추고, 남은 차이는 항목별로 사용자 확인을 받아 기록했다.
 
-갤러리 저장은 처음에 클릭한 메인 스레드에서 PNG 인코딩을 해 화면이 멈췄기 때문에 `rememberCoroutineScope` + `Dispatchers.IO` 로 옮겼다(2026-10). 로고는 `remember` 상태로만 들고 있어 탭 전환이나 회전 시 사라지는 점이 알려진 제약이다.
+## 출시 준비 (2026-11)
 
-## 법적 문서와 라이선스
+- 새 앱 전용 Firebase 프로젝트로 옮기고, 참조가 없음을 확인한 뒤 옛 프로젝트를 삭제했다
+- 처리방침·이용약관을 앱 전용 사이트로 옮겼다
+- 1.0.1(2) 를 Jenkins 로 Play 내부 테스트 트랙에 올리고, Play 설치본으로 스모크를 돌렸다. 프로덕션 트랙은 아직 비어 있다
 
-처리방침·이용약관은 설정 URL 을 `LegalContentSource.fromUrl` 에 넘겨, URL 이 있으면 웹뷰, 없으면 내장 문서 화면을 그린다. URL 이 비어 있는 현재는 더보기 탭이 두 행 자체를 그리지 않는다(앱이 콜백을 null 로 내림). URL 값은 NDK 라이브러리에 빌드 때 들어가므로 채우면 다시 빌드해야 반영된다.
+## 겪은 문제와 해결
 
-## 딥링크
-
-`HOST_TO_ROUTE` 맵 하나가 단일 출처이며 화이트리스트와 라우터 매핑이 여기서 파생된다. 현재 열린 host 는 탭 넷이고 모두 PUBLIC 이다. 자사 앱 간 연동과 App Links 는 없어 신뢰 패키지·App Links 호스트는 비어 있다. 경로 없는 `yunseong-qring://<host>` 형태만 통과한다. 스킴 문자열은 코드, 매니페스트, 빌드 검증 세 곳에 있고 빌드 검증은 매니페스트와 검증 설정만 대조한다.
-
-## 데이터와 QR 모듈 분리
-
-- 기록 저장소는 계약 모듈(`qr-common-api`)과 구현(`qr-common-impl`, Room)으로 나뉜다. feature 는 계약만 의존하고 앱이 구현 모듈을 의존해 Hilt 그래프에 `@Binds` 를 넣는다. 2026-08 에 한 번 이 의존을 뺐다가 되살렸다.
-- 기록의 타입은 저장된 이름을 `QRType.fromStoredName` 으로 되읽어 모르는 이름에서도 예외 없이 처리한다. 카드 라벨과 실제 액션은 같은 타입 판정 하나에서 나온다.
-- 스캐너는 앱마다 다르다. Q-Ring 은 ML Kit 다중 스캔, Lottomate 는 ZXing 단일 스캔이다. 생성은 ZXing 이다.
-
-## 빌드 구성
-
-| 항목 | 값 |
-|---|---|
-| 규약 플러그인 | android.application · hilt · compose · buildconfig · ndk.nativeconfig · verify.prebuild (선언 순서 고정) |
-| 버전 | versionCode 1, versionName 1.0.0 |
-| 서명 | 플레이버 기준 분기 (devDebug 도 dev 키) |
-| 설정 | 전역 -> 앱 common -> 플레이버 순으로 병합해 NativeConfig 라이브러리에 포함 |
-| 배포 | Firebase App Distribution 으로 테스터 그룹에 APK 업로드 |
-| 리소스 | 앱 이름은 Q-Ring 하나 (`generateLocaleConfig = false`) |
-
-컴파일에 필요한 의존이 두 가지 있다. `fundamental:common` 은 `@SupportEmail` 한정자와 `CrashReporter` 상위 타입 해석에 필요해 지우면 컴파일이 깨진다(2026-08 제거를 시도했다가 되돌림). 반면 `fragment-ktx` 는 app-shell 이 이미 노출하므로 빼도 깨지지 않는다.
+| 문제 | 원인 | 해결 |
+|---|---|---|
+| 스캔 화면을 열 때 창 등장 애니메이션과 대기가 끼었다 | 스캔 화면을 Dialog 로 띄웠다 | 같은 창의 셸 겹층으로 옮기고, 전환 시작을 홈 데이터 준비 뒤로 미뤘다 |
+| 인식 상자 밖을 누르면 화면이 밝아졌다 | 기본 탭 포커스가 초점과 함께 노출을 다시 맞췄다 | 탭 포커스를 끄고(연속 자동 초점이라 영향 없음), 기능 없던 파인더 표시를 지웠다 |
+| 코드를 눌러도 반응이 없어 보였다 | 탭 고정 뒤 SDK 가 넘기는 방식이었다 | 추적만 하고, 누른 코드의 결과 시트를 바로 연다. 연출 중 누름은 무시하고 읽기 순서를 번호 순으로 지정했다 |
+| 스플래시 → 홈 전환 중 워드마크가 깜빡였다 | 워드마크와 바탕 층을 다른 속도로 지워 합성 알파가 순간 내려갔다 | 바탕이 다 걷힌 뒤 한 번에 걷고, 모든 프레임의 합성 알파를 테스트로 고정했다 |
+| 갤러리 저장 때 화면이 멈췄다 | PNG 인코딩과 MediaStore 쓰기가 메인 스레드에서 돌았다 | 저장 UseCase 가 IO 로 넘기고 토스트만 메인에서 띄운다 |
+| 릴리스 오류 로그가 전부 사라졌다 | 로거에 크래시 리포터를 연결하는 한 줄이 빠졌다 | 연결을 crashlytics 모듈의 시작 작업으로 옮겨 앱이 빠뜨릴 수 없게 했다 |
+| 히스토리 탭이 항상 비어 있었다 | 스캔 결과를 저장하는 호출부가 없었다 | 스캔 콜백에서 저장을 부르게 배선했다 |
 
 ## 주요 설계 결정
 
 | 날짜 | 결정 | 이유 |
 |---|---|---|
-| 2026-10 | 갤러리 저장을 IO 로 이동 | 메인 스레드 인코딩으로 화면 정지 |
-| 2026-09 | Application 에서 로거에 크래시 리포터 연결 | 연결이 없어 릴리스 오류가 전부 사라지고 있었음 |
-| 2026-08 | 스플래시 흐름을 공용 base 로 승격 | 앱마다 버전 확인 흐름을 복제해 분기가 갈림 |
-| 2026-08 | `qr-common-impl` 을 앱 의존으로 복원 | 히스토리가 계약 모듈만 의존하게 되며 저장소 바인딩이 전이되지 않음 |
-| 2026-08 | 자리 표시 화면을 실제 화면으로 교체 | 약관·처리방침·라이선스 라우트가 빈 화면이었음 |
-| 2026-08 | 탭 화면을 feature 모듈로 분리 | 화면 코드가 전부 앱 모듈에 있던 구조 정리 |
+| 2026-11-26 | 스캔은 추적만 하고 누른 코드만 연다 | 자동 넘김이 사용자에게 무반응으로 보였다 |
+| 2026-11-25 | 스캔 화면을 셸 겹층으로 | 창 전환 지연 제거, 홈과 이어지는 연출 |
+| 2026-11-24 | 큐링 시안을 Paper 정본으로 | 가족 앱 부품 값을 한 곳에서 정한다 |
+| 2026-11-19 | 공용 앱 셸 첫 채택 | MainActivity 조립 코드를 앱마다 베끼지 않는다 |
+| 2026-11-17 | 권한 연결을 공용 모듈로 | 앱마다 같은 연결 코드 반복 |
+| 2026-11-11 | QR SDK 전환, 공용 QR 모듈 5개 삭제 | 이 앱만 쓰던 코드라 SDK 와 앱으로 나눴다 |
+| 2026-10 | 로거 연결을 시작 작업으로 | 한 줄 누락으로 릴리스 오류가 사라졌다 |
+| 2026-08 | 탭 화면을 feature 모듈로 분리 | 화면 코드가 전부 앱 모듈에 있었다 |
 
 ## 알려진 유의사항
 
-- 로고 선택 창을 취소하면 이미 넣어 둔 로고가 지워진다(선택기가 취소 시 null 을 넘기고 그대로 대입).
-- 공유 콜백은 아직 메인 스레드에서 캐시 파일을 쓴다. 쓰기 실패 시 화면에 드러나지 않는다.
-- Activity 가 재생성되면 시작 딥링크가 한 번 더 처리된다.
-- 창 테마가 플랫폼 다크 테마라 Compose 첫 프레임 전 배경은 어둡다.
+- 생성 탭 로고는 탭 전환·회전은 넘기지만 프로세스가 죽으면 사라진다(Bitmap 을 저장 상태에 넣지 않는다)
+- 공유는 아직 메인 스레드에서 캐시 파일을 쓰고, 실패해도 화면에 안내가 없다
+- 자동 백업이 꺼져 있어 기기를 바꾸면 기록이 옮겨지지 않는다

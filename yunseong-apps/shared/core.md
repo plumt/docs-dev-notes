@@ -1,33 +1,29 @@
 # shared/core 개요
 
-`shared/core` 는 모든 앱과 shared feature 가 공통으로 기대는 인프라 계층입니다. 총 61개 Gradle 모듈이 4개 그룹으로 나뉩니다(달 천문 계산 그룹은 공개 SDK 로 이전 중이라 이 저장소에서 빠졌습니다). 화면이 있는 기능은 `shared/feature` 가, 앱 전용 코드는 `apps/*` 가 맡고, 이 계층은 "계약, 순수 규칙, 얇은 SDK 래퍼, 공통 UI 골격"만 둡니다.
+`shared/core` 는 모든 앱과 shared feature 가 공통으로 기대는 인프라 계층입니다. 총 56개 Gradle 모듈이 3개 그룹으로 나뉩니다. 달 천문 계산, 권한, QR, 광고 같은 기능은 공개 SDK(`net.plumt.*`)로 옮겨 이 저장소에는 연결 코드만 남았습니다. 화면이 있는 기능은 `shared/feature` 가, 앱 전용 코드는 `apps/*` 가 맡고, 이 계층은 "계약, 순수 규칙, 얇은 SDK 래퍼, 공통 UI 골격"만 둡니다.
 
 ## 그룹별 모듈 표
 
 | 그룹 | 모듈 수 | 역할 | 상세 |
 |---|---|---|---|
-| common | 35 | 네트워크, DB, 디자인 시스템, 광고, 공공 API 클라이언트, 기능별 계약 | [core/common.md](core/common.md) |
+| common | 42 | 네트워크, DB, 디자인 시스템, 광고, 공공 API 클라이언트, 기능별 계약 | [core/common.md](core/common.md) |
 | firebase | 10 | Firebase SDK 를 Hilt 와 코루틴에 맞게 감싼 래퍼 | [core/firebase.md](core/firebase.md) |
-| fundamental | 5 | 최하위 기반(시각, 로깅, 설정), 권한 계약, 상태홀더 계약, 알람, 로컬 알림 | [core/fundamental.md](core/fundamental.md) |
+| fundamental | 4 | 최하위 기반(시각, 로깅, 설정), 상태홀더 계약, 알람, 로컬 알림 | [core/fundamental.md](core/fundamental.md) |
 | lunar | 0 | 공개 SDK 로 이전 중 (옛 순수 Kotlin 천문 계산) | [core/lunar.md](core/lunar.md) |
-| permissions | 11 (+ 우산 디렉터리) | 권한 하나당 모듈 하나인 Provider 구현 | [core/permissions.md](core/permissions.md) |
 
-### common (35)
-admob, admob-testing, air-quality, analytics, app-shell, astro-event, backup, billing, calendar, clipboard, connectivity, crypto-e2ee, database, deeplink, delta-sync, designsystem, favorites, image-compression, location-provider, moon-viewing, navigation-base, network, outbox, paging, review-prompt, search, theme-mode, threshold-alert, time-sync, ui, ui-base, weather-kma, widget-base, wikipedia, write-coalescer
+### common (42)
+admob, admob-testing, air-quality, analytics, app-shell, astro-event, backoff, backup, billing, calendar, clipboard, connectivity, crypto-e2ee, database, deeplink, delta-sync, demo-seed, designsystem, favorites, location-provider, moon-viewing, navigation-base, network, outbox, paging, period-stats, permission, recurrence, review-prompt, search, service-day, theme-mode, threshold-alert, time-sync, transaction, ttl-cache, ui, ui-base, weather-kma, widget-base, wikipedia, write-coalescer
 
-공개 SDK 로 이전 중인 모듈: `admob`(광고, [sdk-kotlin-ads](https://github.com/plumt/sdk-kotlin-ads)), `image-compression`(이미지 압축, [sdk-kotlin-image](https://github.com/plumt/sdk-kotlin-image)), `time-sync`(시간, [sdk-kotlin-time](https://github.com/plumt/sdk-kotlin-time)). 자세한 내용은 SDK 저장소를 봅니다.
+공개 SDK 위의 연결 모듈: `admob`([sdk-kotlin-ads](https://github.com/plumt/sdk-kotlin-ads)), `permission`([sdk-kotlin-permission](https://github.com/plumt/sdk-kotlin-permission)). `time-sync` 도 [sdk-kotlin-time](https://github.com/plumt/sdk-kotlin-time) 으로 이전 중입니다. 이미지 압축 모듈은 쓰는 곳이 없어 삭제했습니다.
 
 ### firebase (10)
 core, auth, app-check, crashlytics, database, firestore, functions, messaging, remote-config, storage
 
-### fundamental (5)
-common, permission, presentation-base, alarm, local-notification
+### fundamental (4)
+common, presentation-base, alarm, local-notification
 
 ### lunar (0)
 달 위상·절기 계산은 공개 SDK [sdk-kotlin-astro](https://github.com/plumt/sdk-kotlin-astro)(`net.plumt.astro:lunar`)로 옮겼습니다. 이전 중이며 상세는 [core/lunar.md](core/lunar.md) 한 줄만 둡니다.
-
-### permissions (11)
-permission-core, permission-bluetooth, permission-calendar, permission-camera, permission-contacts, permission-gallery, permission-location, permission-location-background, permission-microphone, permission-motion, permission-notification
 
 ## 의존 방향
 
@@ -35,8 +31,7 @@ permission-core, permission-bluetooth, permission-calendar, permission-camera, p
 common  ──►  fundamental/common (최하위)
    │            ▲
    ├──► firebase/* ──► firebase/core
-   └──► fundamental/permission ◄── permissions/permission-*
-(달 계산은 외부 공개 SDK 의존 — moon-viewing 이 소비)
+   └──► 공개 SDK (net.plumt.*) — 권한·광고·달 계산은 외부 의존
 ```
 
 - `fundamental/common` 은 다른 project 를 전혀 의존하지 않는 최하위 모듈이며, 저장소에서 직접 의존하는 모듈 수가 가장 많습니다.
@@ -46,9 +41,9 @@ common  ──►  fundamental/common (최하위)
 ## 공통 설계 원칙
 
 1. **포트(계약)와 구현의 분리**: 저장이 필요한 기능(favorites, theme-mode, search, review-prompt)은 인터페이스(포트)만 두고 구현은 앱이 Hilt 로 바인딩합니다. Room 처럼 제네릭 구현이 불가능하거나 앱마다 저장소가 다르기 때문입니다.
-2. **플러그인식 확장은 Hilt Multibindings**: analytics 로거, FCM 핸들러, 권한 Provider, 알람 재예약자(`AlarmRescheduler`)는 `@IntoSet` 으로 기여하고, 모듈이 `@Multibinds` 로 빈 집합을 선언해 아무도 등록하지 않아도 빌드가 깨지지 않게 합니다.
+2. **플러그인식 확장은 Hilt Multibindings**: analytics 로거, FCM 핸들러, 알람 재예약자(`AlarmRescheduler`)는 `@IntoSet` 으로 기여하고, 모듈이 `@Multibinds` 로 빈 집합을 선언해 아무도 등록하지 않아도 빌드가 깨지지 않게 합니다.
 3. **앱별 값은 주입, 모듈에는 박지 않음**: API 서비스 키, base URL, DB 이름, 광고 단위 ID, 분석 SDK 는 모두 한정자(qualifier)나 파라미터로 받습니다. 키는 NativeConfig 에서 앱이 읽어 제공합니다.
-4. **빌드 시점 가드**: `FirebaseConfigGuard`(google-services 적용 확인), `ConsumerRulesGuard`(직렬화 DTO 의 keep 규칙 확인), `PermissionProviderGuard`(권한 타입별 Provider 모듈 등록 확인)가 규칙 위반을 빌드에서 막습니다.
+4. **빌드 시점 가드**: `FirebaseConfigGuard`(google-services 적용 확인), `ConsumerRulesGuard`(직렬화 DTO 의 keep 규칙 확인), `HiltWorkerGuard`(WorkManager 워커 팩토리 생성기 누락 확인)가 규칙 위반을 빌드에서 막습니다.
 5. **실패는 값으로, 취소는 전파**: 외부 호출 실패는 `null` / `false` / `Result` / `Failure` 값으로 접어 호출부로 예외가 새지 않게 하되, 넓은 `catch` 첫 줄에서 `rethrowIfCancellation()` 을 불러 코루틴 취소는 삼키지 않습니다.
 6. **시각 주입**: 시각은 `TimeProvider` 로만 읽어 서버 시간 보정을 받게 하고, 테스트에서 고정할 수 있게 합니다.
 7. **UI 문구와 도메인 분리**: 판정 모듈(moon-viewing, threshold-alert, location-provider 등)은 문구를 만들지 않고 값만 돌려줍니다. 표시는 소비 화면이 합니다.

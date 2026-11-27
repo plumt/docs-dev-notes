@@ -2,7 +2,7 @@
 
 ## 개요
 
-yunseongApps는 Android 앱 7개(Lottomate, Lunar, QRScanner, Diding, Moduta, Fxrate, AirTalk)를 담은 멀티 앱 모노레포입니다.
+yunseongApps는 Android 앱 7개(Lottomate, Lunar, QRScanner, Diding, Moduta, Fxrate, AirTalk)와 검증용 견본 앱 1개(Inventory)를 담은 멀티 앱 모노레포입니다.
 Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 때 기존 모듈을 조립하는 것이 기본이 되도록 설계했습니다.
 규칙은 문서에만 두지 않고 Gradle Convention Plugin의 Guard로 빌드 시점에 강제합니다.
 
@@ -12,7 +12,7 @@ Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 �
 ┌──────────────────────────────────────────────────────┐
 │              Apps (apps/*)                           │  조립 전용: Application, MainActivity,
 │  lottomate, lunar, qrscanner, diding, moduta,        │  내비게이션, DI 바인딩
-│  fxrate, airtalk                                     │
+│  fxrate, airtalk, inventory(견본)                    │
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
@@ -20,17 +20,17 @@ Clean Architecture와 Modular Architecture를 기반으로, 새 앱을 만들 �
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
-│         Shared Feature (shared/feature/*)            │  여러 앱이 공유하는 기능 (33개)
+│         Shared Feature (shared/feature/*)            │  여러 앱이 공유하는 기능 (28개)
 └────────────────────────┬─────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
-│         Shared Core (shared/core/*)                  │  공통 인프라 (52개)
-│  fundamental / common / firebase / permissions / lunar│
+│         Shared Core (shared/core/*)                  │  공통 인프라 (56개)
+│  fundamental / common / firebase                     │
 └──────────────────────────────────────────────────────┘
 ```
 
-총 168개 모듈(MODULE_INDEX 기준)입니다. Shared Core는 fundamental 5, permissions 11, common 35, firebase 10이고,
-Shared Feature는 33개, 앱 전용 모듈은 앱마다 5~17개입니다. 달 천문 계산 모듈(옛 lunar)은 공개 SDK 로 옮겨 가는 중이라 더 이상 이 저장소의 모듈이 아닙니다.
+총 172개 모듈입니다. Shared Core는 fundamental 4, common 42, firebase 10이고,
+Shared Feature는 28개, 앱 전용 모듈은 앱마다 4~18개입니다. 달 천문 계산, 권한, QR 모듈은 공개 SDK 로 옮겨 더 이상 이 저장소의 모듈이 아닙니다.
 
 shared 모듈 문서는 [shared/core](shared/core.md), [shared/feature](shared/feature.md)에 있습니다.
 
@@ -72,9 +72,9 @@ shared 모듈 문서는 [shared/core](shared/core.md), [shared/feature](shared/f
 - 앱 모듈 패키지 루트에는 `Application`, `MainActivity`, `di/`, `navigation/`만 허용합니다 (`AppModuleShapeGuard`).
   `di/` 아래로 숨기는 우회와 이름을 바꾼 Service·Receiver·Provider·Activity·Worker도 기능으로 보고 막습니다.
 - 화면 모듈은 `convention.feature`를 씁니다. `library + hilt + compose` 손조합은 금지입니다 (`ModuleConventionGuard`).
-- Firebase 모듈을 쓰면 `google-services` 설정이 있어야 하고 (`FirebaseConfigGuard`), 쓰는 권한의 Provider 모듈을 의존해야 합니다 (`PermissionProviderGuard`).
+- Firebase 모듈을 쓰면 `google-services` 설정이 있어야 합니다 (`FirebaseConfigGuard`).
 
-예외 목록(`ALLOWLIST`)은 비어 있고, 7개 앱이 모두 규격을 지킵니다.
+예외 목록(`ALLOWLIST`)은 비어 있고, 모든 앱이 규격을 지킵니다.
 
 ## 새 기능을 어디에 만드는가
 
@@ -141,23 +141,28 @@ shared/feature/notification-inbox/
 └── notification-inbox-ui/     Compose 화면 + ViewModel (api만 의존)
 ```
 
-적용 대상은 `notification-inbox`, `lock`, `qr:common`, `qr:multi-scanner`입니다. 핵심 규칙은 다음과 같습니다.
+적용 대상은 `notification-inbox`, `lock`입니다. 핵심 규칙은 다음과 같습니다.
 - impl의 Room은 `implementation`으로 선언합니다. `api`로 노출하면 소비자 classpath로 다시 전파돼 분리 효과가 사라집니다.
 - api 모듈에는 `convention.android.hilt`를 적용하지 않습니다 (KSP 태스크가 생기기 때문).
 - Room `@Entity`는 api에 두지 않고, 공개 API가 ML Kit, Biometric, Compose 타입을 노출하지 않게 합니다.
 - 앱은 보통 `-impl`과 `-ui`를 의존합니다.
 
-### Provider + Registry 패턴 (권한, 소셜 로그인)
+### Provider + Registry 패턴 (소셜 로그인)
 
-권한과 소셜 로그인은 계약을 한 모듈에, 구현을 기능별 모듈에 두고 Hilt 멀티바인딩으로 모읍니다.
+소셜 로그인은 계약을 한 모듈에, 구현을 제공자별 모듈에 두고 Hilt 멀티바인딩으로 모읍니다.
 
-- 권한: `fundamental:permission`이 `PermissionProvider` 계약, `PermissionProviderRegistry`, UseCase를 갖고,
-  `permissions/permission-camera` 같은 구현 모듈이 의존 추가만으로 `@IntoSet` 등록됩니다.
-  `@Multibinds` 선언 덕에 Provider가 하나도 없는 앱도 빈 Set이 주입됩니다.
-  등록되지 않은 권한 타입은 런타임 예외가 나므로 `PermissionProviderGuard`가 빌드 시점에 의존 누락을 잡습니다.
 - 소셜 로그인: `social-login-core` 계약과 Google, Kakao, Naver 구현을 모듈로 분리해, 카카오만 쓰는 앱의 컴파일 경로에서
   Credential Manager, Firebase Auth, 네이버 SDK가 빠집니다. 미등록 타입은 예외 대신 `NotSupported` 결과를 돌려줍니다.
   키는 앱이 NativeConfig 경유로 제공합니다.
+
+### 범용 기능의 공개 SDK 분리
+
+앱과 무관하게 쓸 수 있는 기능은 공개 SDK(`sdk-kotlin-*`, Maven Central `net.plumt.*`)로 옮기고, 저장소에는 Hilt 연결 코드만 남깁니다.
+2026-11 기준 달 계산, 권한, QR 스캔·생성, 광고가 옮겨졌고 소셜 로그인과 시간 보정이 옮기는 중입니다.
+
+- 옮길 때는 앱이 쓰던 공개 API 를 어댑터 모듈이 그대로 유지해, SDK 전환 커밋에서 앱 코드가 바뀌지 않게 합니다(광고).
+- 권한은 원래 권한 하나당 모듈 하나(11개)에 빌드 Guard 까지 두는 구조였는데, SDK 하나와 연결 모듈 하나로 줄이면서 모듈 12개와 Guard 1종을 지웠습니다.
+- 쓰는 앱이 없어진 모듈(이미지 압축 등)은 옮기지 않고 삭제합니다.
 
 ### 시간 보정 패턴 (`TimeProvider` + `TimeCorrection`)
 
@@ -201,25 +206,26 @@ Convention Plugin이 "빌드는 성공하지만 런타임이나 출시 후에야
   빠뜨리면 release에서만 조용히 깨집니다.
 - 앱 `proguard-rules.pro`에는 앱 고유 정책만 둡니다.
 - Gson·SimpleXML 같은 리플렉션 직렬화 DTO는 반드시 keep합니다. 난독화되면 예외 없이 전 필드가 null이 됩니다.
-- JNI 심볼 보존 규칙(`proguard-nativeconfig.pro`)은 NativeConfig 플러그인이 자동 생성합니다.
+- JNI 심볼 보존 규칙은 NativeConfig 플러그인이 자동 생성합니다.
 
 ## 보안 아키텍처: NDK NativeConfig
 
 런타임 API 키를 BuildConfig에 넣으면 APK에 평문으로 남기 때문에, 앱이 런타임에 읽는 값은 네이티브(C) 레이어로 숨깁니다.
 
 ```
-clients/<app>/config.json            키의 유일한 출처
-  → build-logic generate_native_config.py   XOR 암호화된 C 소스, CMakeLists, Kotlin 래퍼, ProGuard 규칙 생성
+앱별 설정 파일 (저장소 밖, 키의 유일한 출처)
+  → 빌드 시 생성기가 암호화된 C 소스, CMakeLists, Kotlin 래퍼, ProGuard 규칙 생성
   → CMake가 .so로 컴파일
-  → NativeConfig.<getter>()가 JNI로 런타임에 복호화
+  → Kotlin 래퍼가 JNI로 런타임에 복호화
 ```
 
 - `convention.ndk.nativeconfig`를 적용하면 배선이 끝납니다. 모듈 경로에서 client·library·package를 추론합니다.
-- XOR 키는 필드명의 SHA-256에서 파생해 결정론적이고 증분 빌드에 안정적입니다.
+- 같은 입력이면 같은 산출물이 나오게 만들어 증분 빌드가 불필요하게 다시 돌지 않습니다.
+- 이 방식은 정적 추출을 어렵게 할 뿐 비밀을 지켜 주지는 않습니다. 그래서 일부 공공 API 키는 앱에 넣지 않고 App Check 를 거치는 서버 프록시 뒤에 둡니다.
 - Kotlin 래퍼까지 생성하는 이유는, 손으로 쓰던 래퍼가 config 변경을 따라가지 못해 실제로 드리프트가 났기 때문입니다.
 - `keys`를 지정하면 그 모듈의 `.so`에 필요한 키만 들어갑니다.
 - 매니페스트 meta-data로 SDK가 직접 읽는 값(지도 SDK 키, AdMob App ID)은 NDK로 숨길 수 없어
-  `loadClientConfig()`로 읽어 placeholder로 주입합니다.
+  빌드 시 설정에서 읽어 placeholder로 주입합니다.
 - 서명 자격증명은 APK에 들어가지 않는 빌드 전용 값이라 NDK 대상이 아니며, 로컬 설정이나 환경변수에서 읽습니다.
 - JNI 값을 ViewModel에서 직접 부르지 않고 얇은 wrapper object를 거쳐야 단위 테스트에서 목킹할 수 있습니다.
 
@@ -233,8 +239,6 @@ SDK 버전과 flavor, 서명 이름 같은 전역 상수는 convention 모듈의
 | 영역 | 기술 |
 |------|------|
 | Android | Kotlin 2.2.10, AGP 9.0.1, Jetpack Compose(BOM 2025.02.00, Material 3), Hilt 2.56.2, Room 2.7.0-alpha12, Firebase BoM |
-| Backend | Node.js 20, firebase-functions v2, Firebase Admin SDK, Firestore |
-| Frontend | React 19, TypeScript 5.9, Vite 7, React Router 7, Firebase JS SDK |
 
 ## 더 알아보기
 

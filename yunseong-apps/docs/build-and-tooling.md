@@ -10,7 +10,7 @@
 
 | 위치 | 담는 것 |
 |------|--------|
-| `build-logic/convention` | Convention Plugin 10종과 Guard 8종 (Kotlin DSL 플러그인 모듈) |
+| `build-logic/convention` | Convention Plugin 11종과 Guard 8종 (Kotlin DSL 플러그인 모듈) |
 | `build-logic/scripts` | NativeConfig 생성기(Python)와 그 단위 테스트 |
 
 버전 카탈로그는 메인 빌드와 같은 `gradle/libs.versions.toml`을 읽습니다.
@@ -28,9 +28,10 @@
 | `convention.buildconfig` | BuildConfig 생성 활성화 |
 | `convention.detekt` | 정적 분석(report-only), 모듈별 baseline, 공유 설정. library/application이 자동 적용 |
 | `convention.feature` | library + hilt + compose, presentation-base, ui-base, designsystem, 테스트 의존 일괄. core 경로에서는 실패 |
-| `convention.ndk.nativeconfig` | config.json에서 XOR C 소스, CMakeLists, JNI 래퍼, ProGuard 규칙 생성 |
+| `convention.ndk.nativeconfig` | 앱별 설정에서 암호화된 C 소스, CMakeLists, JNI 래퍼, ProGuard 규칙 생성 |
 | `convention.verify.prebuild` | variant마다 패키징 전 설정·서명·딥링크 검증 (앱 전용) |
 | `convention.play.publish` | Gradle Play Publisher 배선 |
+| `convention.screenshot` | Roborazzi + Robolectric 화면 스크린샷 테스트 |
 
 설계 포인트는 다음과 같습니다.
 
@@ -41,7 +42,7 @@
   루트에서 테스트를 돌릴 때 flavor 앱이 조용히 건너뛰어지기 때문입니다.
 - NDK flavor 인자는 `afterEvaluate`가 아니라 `configureEach`로 넘깁니다.
 - lint는 NewApi를 오류로 고정해 minSdk 하위 호환을 게이트로 삼고, 기존 지적은 앱별 baseline으로 그랜드파더링합니다.
-- 클라이언트 설정은 `loadClientConfig`, 빌드 전용 시크릿은 `getSecret`으로 읽는 확장 함수로 제공합니다.
+- 클라이언트 설정과 빌드 전용 시크릿은 저장소 밖에서 읽는 확장 함수로 제공합니다.
 
 ### Guard 8종
 
@@ -53,7 +54,7 @@ Guard는 플러그인이 적용될 때 configure 단계에서 위반을 찾아 �
 | `ModuleConventionGuard` | 화면 모듈의 손조합, 플러그인 선언 순서 불일치 |
 | `AppModuleShapeGuard` | 앱 모듈에 조립 이외의 파일·중첩 디렉터리·Android 컴포넌트 |
 | `FirebaseConfigGuard` | Firebase 모듈에 닿는데 `google-services` 설정이 없음 |
-| `PermissionProviderGuard` | 쓰는 권한 타입의 Provider 모듈이 의존 그래프에 없음 |
+| `HiltWorkerGuard` | `@HiltWorker` 워커가 있는데 워커 팩토리 생성기(androidx.hilt 컴파일러)가 빠짐 |
 | `ConsumerRulesGuard` | 직렬화 DTO가 있는데 `consumer-rules.pro`에 실질 규칙이 없음 |
 | `MigrationSafetyGuard` | 마이그레이션도 허용 플래그도 없는 `fallbackToDestructiveMigration()` |
 | `AdIdVariantGuard` | AdMob 테스트 퍼블리셔 ID가 debug 블록 밖에 고정됨 |
@@ -61,8 +62,11 @@ Guard는 플러그인이 적용될 때 configure 단계에서 위반을 찾아 �
 각 Guard는 긴급 우회용 `-Pskip...=true` 플래그를 갖습니다. 값이 정확히 `true`일 때만 꺼지고 경고 로그를 남기며,
 커밋 전에는 반드시 원복합니다. 플래그 존재만으로 꺼지면 `gradle.properties` 한 줄로 전 빌드의 검증이 조용히 해제되기 때문입니다.
 
-Firebase·권한 Guard는 다른 모듈의 Gradle 모델 대신 build 스크립트 텍스트를 읽어 판정합니다.
+Firebase Guard는 다른 모듈의 Gradle 모델 대신 build 스크립트 텍스트를 읽어 판정합니다.
 그 모듈이 아직 평가되지 않았어도 판정할 수 있게 한 선택입니다.
+
+`HiltWorkerGuard` 는 실제 사고에서 나왔습니다. Dagger 컴파일러만 있고 워커 팩토리 생성기가 빠져도 컴파일과 단위 테스트는 모두 통과하는데,
+런타임에 WorkManager 가 워커를 만들지 못해 오프라인에서 보낸 채팅 메시지가 "전송 중"에 영구히 멈췄습니다. 테스트로 못 잡는 배선 누락이라 빌드 단계로 올렸습니다.
 
 ## 빌드 전 검증과 NativeConfig
 
@@ -92,6 +96,8 @@ AGP Lint와는 별개 도구로, Lint는 Android API·리소스 오용을, Detek
 | `dev.py lint <앱>` | minSdk 하위 호환 게이트 lint, 실패 시 오류 요약 |
 | `dev.py wire <앱> <모듈>` | 모듈을 앱 build 파일·문서·딥링크·탭에 배선 |
 | `dev.py cert <앱>` | APK·설치본 서명 인증서 지문 확인 (빌드하지 않음) |
+| `dev.py check <앱>` | 빌드 전 정적 검사 (앱 함정, 계층 import, 하드코딩 문자열, 문서 규약) |
+| `dev.py predeploy <앱>` | CI 배포 잡의 테스트 단계와 같은 Gradle 태스크를 로컬에서 먼저 실행 |
 
 ### 스캐폴딩
 
@@ -106,21 +112,37 @@ AGP Lint와는 별개 도구로, Lint는 Android API·리소스 오용을, Detek
 
 ### 배포
 
-- Firebase 배포 스크립트: 전체, Functions만, Hosting만
+- 서버·웹 배포는 별도 저장소에서 합니다([백엔드와 웹](backend-and-web.md)).
 - App Distribution 배포 스크립트: 앱·환경·빌드 타입을 지정하는 대화형 또는 인자 방식
 - Jenkins 원격 호출 스크립트: 로컬에서 빌드하지 않고 CI 서버에 위임
-- GitHub Actions: Android 빌드는 자동/수동, Firebase 배포는 수동 실행만 허용
+
+## 출시 절차 자동화
+
+앱을 하나씩 출시하면서 같은 실수가 반복돼, 사람이 기억하던 체크리스트를 검사기로 옮겼습니다.
+
+| 도구 | 하는 일 |
+|------|--------|
+| 앱 표준 검사 | 앱이 갖춰야 하는데 빠진 것(공용 셸·테마·브랜드 표기·설정 화면·약관·서버 계약 등 80여 항목)을 표준 정의와 대조해 격차로 보고 |
+| 출시 원장 | 스토어 등록부터 프로덕션 공개까지 단계를 실측해 완료·미완·검수 대기로 판정. 코드에서 읽을 수 있는 값은 원장에 다시 적지 않고, 콘솔 작업은 수행 기록과 2차 검수 기록이 모두 있어야 완료 |
+| 앱 함정 검사 | 단위 테스트는 가짜 객체로 통과했지만 실제 배선이 끊긴 결함 유형(리뷰 약 200건에서 추출)을 정적 규칙으로 빌드 전에 차단 |
+| 시안 대조 | 디자인 시안의 실측값과 실기기 UI 덤프를 요소별로 비교해 dp 차이 표를 만들고, 배포 전 관문의 근거로 사용 |
+| E2E 범위 계산 | 마지막 전체 E2E 통과 이후 바뀐 경로만 보고 돌릴 시나리오를 고름. 매니페스트 같은 넓은 변경은 전체 실행 |
+| 쇼케이스 대조 | 앱 소개 사이트·포트폴리오의 앱 상태가 출시 원장과 어긋나는지 검사 |
+
+스토어 스크린샷은 앱별 `core:demo-seed` 가 debug 빌드에서만 촬영용 데이터를 넣고, 같은 화면을 매번 같은 상태로 다시 찍을 수 있게 합니다.
 
 ## 테스트 인프라
 
 ### 유닛 테스트
+
+- 화면 상태별 스크린샷 테스트는 `convention.screenshot`(Roborazzi + Robolectric)으로 JVM 에서 돌립니다.
 
 - 모든 앱의 테스트는 `:apps:<앱>:testDebugUnitTest` 집합 태스크 경로를 탑니다.
 - 앱 단위 러너(`apps/<앱>/script/run-unit-tests.sh`)는 `src/test`가 있는 하위 모듈을 찾아 하드코딩 없이 실행합니다.
 - `collect-test-results.sh`는 전체 테스트를 돌려 HTML 리포트, Jenkins 이메일 본문용 표, JUnit XML, properties 파일로 집계합니다.
 - 변경분 테스트는 바뀐 파일을 모듈로 환산하고 역의존 전이 폐포까지 대상으로 삼습니다. 빌드 설정이 바뀌면 전체 테스트를 권합니다.
 - 커버리지는 Kover 기반 스크립트가 라인 80%, 분기 70% 기준으로 판정합니다 (현재 적용 모듈은 제한적).
-- 테스트 대상 모듈을 성격별(계산·보안, SDK 위임 브릿지, 상태전이·매핑, 딥링크 핸들러, 권한 Provider DI)로 나누고,
+- 테스트 대상 모듈을 성격별(계산·보안, SDK 위임 브릿지, 상태전이·매핑, 딥링크 핸들러)로 나누고,
   순수 UI·DI 계약 모듈은 테스트를 생략하는 분류 기준을 문서로 고정했습니다.
 
 ### Appium E2E 하네스
@@ -128,8 +150,7 @@ AGP Lint와는 별개 도구로, Lint는 Android API·리소스 오용을, Detek
 화면 흐름을 testTag 기반으로 검증하는 자체 구현 러너(`scripts/appium_runner`)입니다.
 외부 저장소 의존 없이 Android 전용, Hilt, Compose native 화면이라는 전제로 범위를 줄였습니다.
 
-- **testTag 컨벤션**: 별도 TestTags 파일을 만들지 않고, 태그 상수를 화면 파일 맨 아래에 `internal const val TAG_X = "snake_case"`로
-  둡니다. 동적 목록 항목은 `"${TAG_X}_${id}"`로 조합하고, 루트에 강제 태그를 달지 않습니다.
+- **testTag 컨벤션**: 별도 TestTags 파일을 만들지 않고, 태그 상수를 그 화면 파일 안에 둡니다. 동적 목록 항목은 태그에 항목 id 를 붙여 구분합니다.
 - **`testTagsAsResourceId`**: Appium(UiAutomator2)이 Compose testTag를 resource-id로 읽도록 앱 최상위 Composable에 한 번만 설정합니다.
 - **`test-tags.yaml`**: 소스의 태그 상수를 정적 스캔해 앱별로 자동 생성합니다. 직접 수정하지 않습니다.
 - **시나리오 YAML**: 앱별 `appiumTest/scenarios`에 두고, 30여 개 액션 중 native Compose에 필요한 서브셋을 지원합니다.
@@ -144,7 +165,7 @@ AGP Lint와는 별개 도구로, Lint는 Android API·리소스 오용을, Detek
 ### 모듈 문서 계약
 
 모든 모듈은 `AGENTS.md`(얇은 인덱스)와 `docs/`(상세)를 가집니다. 모듈은 저장소 루트를 뺀 `AGENTS.md` 보유 디렉터리 전부이며
-Gradle 모듈, 우산 디렉터리, 비 Gradle(backend, functions, frontend, scripts)을 모두 포함합니다.
+Gradle 모듈, 우산 디렉터리, 비 Gradle(scripts 등)을 모두 포함합니다.
 
 - `AGENTS.md`는 네 절만 허용합니다: 모듈 정보, 반드시 지킬 것(최대 8개), 의존성, 문서 인덱스. 분량 상한을 두어 매번 읽어도 부담이 없게 합니다.
 - 상세 문서는 범주마다 개별 파일입니다: 구조, 유의사항, 히스토리, 에러 코드, 비즈니스 로직, 트러블슈팅, 공개 계약 등.
